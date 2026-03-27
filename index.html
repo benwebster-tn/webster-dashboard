@@ -637,7 +637,9 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   /* Ensure mobile scroll works */
   body, #root { overflow-y: auto; -webkit-overflow-scrolling: touch; }
   /* Allow scrollable lists inside cards on mobile */
-  .card { overflow: auto; -webkit-overflow-scrolling: touch; }
+  .card { overflow: visible !important; -webkit-overflow-scrolling: touch; }
+  /* Remove nested scroll containers on mobile — let the page scroll instead */
+  .ren-client-list, .bob-client-list { max-height: none !important; overflow-y: visible !important; }
 }
 @media (max-width: 480px) {
   .header-left h1 { font-size: 18px; }
@@ -5910,6 +5912,7 @@ function renderRenewalContent(container, renData, retPct) {
     cmCard.appendChild(cmSearch);
 
     var cmList = document.createElement("div");
+    cmList.className = "ren-client-list";
     cmList.style.cssText = "max-height:600px;overflow-y:auto;";
     cmCard.appendChild(cmList);
 
@@ -6471,6 +6474,7 @@ function renderRenewalContent(container, renData, retPct) {
     mDetail.style.cssText = "max-height:0;overflow:hidden;transition:max-height 0.4s ease;background:#12141c;";
 
     var mDetailInner = document.createElement("div");
+    mDetailInner.className = "ren-client-list";
     mDetailInner.style.cssText = "padding:10px 14px;max-height:400px;overflow-y:auto;";
 
     if (m.clients && m.clients.length > 0) {
@@ -6937,6 +6941,7 @@ function renderBobContent(container, bob) {
   tableCard.appendChild(colHeaders);
 
   var listContainer = document.createElement("div");
+  listContainer.className = "bob-client-list";
   listContainer.style.cssText = "max-height:600px;overflow-y:auto;";
   tableCard.appendChild(listContainer);
 
