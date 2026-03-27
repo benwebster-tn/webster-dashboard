@@ -627,11 +627,15 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   .bob-detail-table { display: none !important; }
   .bob-detail-stacked { display: block !important; }
 
-  /* NB Work Queue — prevent horizontal overflow */
-  #nb-view-queue { overflow-x: hidden; }
+  /* NB Work Queue — fit content on mobile */
   .nav-tabs { flex-wrap: wrap; gap: 6px; }
   .nav-tab { font-size: 11px; padding: 6px 10px; }
-  .grid-sidebar { overflow: hidden; }
+  .queue-item { gap: 10px; padding: 10px 12px; }
+  .queue-avatar { width: 32px; height: 32px; font-size: 12px; }
+  .queue-name { font-size: 13px; }
+  .queue-stage { font-size: 9px; padding: 2px 6px; }
+  /* Ensure mobile scroll works */
+  body, #root { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 }
 @media (max-width: 480px) {
   .header-left h1 { font-size: 18px; }
@@ -7072,11 +7076,6 @@ function renderBobContent(container, bob) {
       mob.appendChild(mobLeft);
       var mobRight = document.createElement("div");
       mobRight.className = "row-mobile-right";
-      var mobVal = document.createElement("span");
-      mobVal.className = "row-mobile-value";
-      mobVal.style.color = C.green;
-      mobVal.textContent = fmt(cust.totalPremium);
-      mobRight.appendChild(mobVal);
       var mobChev = document.createElement("div");
       mobChev.className = "row-mobile-chev";
       mobChev.textContent = "\u25B6";
@@ -7184,6 +7183,32 @@ function renderBobContent(container, bob) {
       // Stacked mobile-friendly policy view
       var polStacked = document.createElement("div");
       polStacked.className = "bob-detail-stacked";
+
+      // Total premium header
+      var premHeader = document.createElement("div");
+      premHeader.style.cssText = "margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #2a2d3a;";
+      var premLabel = document.createElement("div");
+      premLabel.style.cssText = "font-size:9px;color:#5c6078;text-transform:uppercase;letter-spacing:0.5px;";
+      premLabel.textContent = "TOTAL PREMIUM";
+      var premValue = document.createElement("div");
+      premValue.style.cssText = "font-size:20px;font-weight:800;color:#34d399;margin-top:2px;";
+      premValue.textContent = fmt(cust.totalPremium);
+      premHeader.appendChild(premLabel);
+      premHeader.appendChild(premValue);
+      if (cust.phone) {
+        var ph = document.createElement("div");
+        ph.style.cssText = "font-size:12px;color:#8b8fa3;margin-top:6px;";
+        ph.textContent = "\uD83D\uDCDE " + cust.phone;
+        premHeader.appendChild(ph);
+      }
+      if (cust.email) {
+        var em = document.createElement("div");
+        em.style.cssText = "font-size:12px;color:#8b8fa3;margin-top:3px;";
+        em.textContent = "\u2709 " + cust.email;
+        premHeader.appendChild(em);
+      }
+      polStacked.appendChild(premHeader);
+
       cust.policies.forEach(function(pol) {
         var pCard = document.createElement("div");
         pCard.className = "policy-card";
@@ -7245,7 +7270,7 @@ function renderBobContent(container, bob) {
           chevron.style.transform = "rotate(0deg)";
           custRow.style.borderColor = "#2a2d3a";
         } else {
-          detail.style.maxHeight = (cust.policies.length * 120 + 120) + "px";
+          detail.style.maxHeight = (cust.policies.length * 200 + 250) + "px";
           chevron.style.transform = "rotate(90deg)";
           custRow.style.borderColor = C.blue + "44";
         }
@@ -7259,7 +7284,7 @@ function renderBobContent(container, bob) {
           mobChev.style.transform = "rotate(0deg)";
           custRow.style.borderColor = "#2a2d3a";
         } else {
-          detail.style.maxHeight = (cust.policies.length * 120 + 120) + "px";
+          detail.style.maxHeight = (cust.policies.length * 200 + 250) + "px";
           chevron.style.transform = "rotate(90deg)";
           mobChev.style.transform = "rotate(90deg)";
           custRow.style.borderColor = C.blue + "44";
@@ -7669,10 +7694,12 @@ function renderCancellationsView() {
       notesDiv.appendChild(notesInput);
       pRow.appendChild(notesDiv);
 
-      // Mobile card view for cancellation
-      var mob = document.createElement("div");
-      mob.className = "row-mobile";
-      mob.style.borderTop = "1px solid " + C.bdr;
+      // Mobile card view for cancellation (with expandable detail)
+      var mobWrap = document.createElement("div");
+      mobWrap.className = "row-mobile";
+      mobWrap.style.cssText = "border-top:1px solid " + C.bdr + ";flex-wrap:wrap;";
+      var mobTop = document.createElement("div");
+      mobTop.style.cssText = "display:flex;align-items:center;gap:10px;width:100%;cursor:pointer;";
       var mobLeft = document.createElement("div");
       mobLeft.className = "row-mobile-left";
       var mobName = document.createElement("div");
@@ -7681,25 +7708,66 @@ function renderCancellationsView() {
       mobLeft.appendChild(mobName);
       var mobSub = document.createElement("div");
       mobSub.className = "row-mobile-sub";
-      mobSub.textContent = (row.carrier || "") + " \u00B7 " + (row.type || "") + " \u00B7 " + (row.reason || "");
+      mobSub.textContent = (row.carrier || "") + " \u00B7 " + (row.type || "");
       mobLeft.appendChild(mobSub);
-      mob.appendChild(mobLeft);
+      mobTop.appendChild(mobLeft);
       var mobRight = document.createElement("div");
       mobRight.className = "row-mobile-right";
+      var mobPremAmt = parseFloat(String(row.premiumLost).replace(/[$,]/g, "")) || 0;
       var mobVal = document.createElement("span");
       mobVal.className = "row-mobile-value";
       mobVal.style.color = C.red;
-      var mobPrem = parseFloat(String(row.premiumLost).replace(/[$,]/g, "")) || 0;
-      mobVal.textContent = fmt(mobPrem);
+      mobVal.textContent = fmt(mobPremAmt);
       mobRight.appendChild(mobVal);
-      var mobBadge = document.createElement("span");
-      mobBadge.className = "row-mobile-badge";
-      var isPersonalMob = (row.section || "").toLowerCase() === "personal";
-      mobBadge.style.cssText = isPersonalMob ? "background:rgba(79,140,255,0.1);color:" + C.blue + ";" : "background:rgba(167,139,250,0.1);color:" + C.purple + ";";
-      mobBadge.textContent = isPersonalMob ? "P" : "C";
-      mobRight.appendChild(mobBadge);
-      mob.appendChild(mobRight);
-      detailContainer.appendChild(mob);
+      var mobChev = document.createElement("div");
+      mobChev.className = "row-mobile-chev";
+      mobChev.textContent = "\u25B6";
+      mobRight.appendChild(mobChev);
+      mobTop.appendChild(mobRight);
+      mobWrap.appendChild(mobTop);
+
+      // Expandable detail for mobile cancellation
+      var mobDetail = document.createElement("div");
+      mobDetail.style.cssText = "max-height:0;overflow:hidden;transition:max-height 0.3s ease;width:100%;";
+      var mobDetailInner = document.createElement("div");
+      mobDetailInner.style.cssText = "padding:10px 0 4px 0;";
+
+      var cancFields = [
+        { label: "CARRIER", value: row.carrier || "-" },
+        { label: "TYPE", value: row.type || "-" },
+        { label: "SECTION", value: row.section || "-" },
+        { label: "REASON", value: row.reason || "-", color: C.red },
+        { label: "PREMIUM LOST", value: fmt(mobPremAmt), color: C.red },
+        { label: "NOTES", value: row.notes || "-" }
+      ];
+      cancFields.forEach(function(f) {
+        var field = document.createElement("div");
+        field.style.cssText = "margin-bottom:6px;";
+        var label = document.createElement("div");
+        label.style.cssText = "font-size:9px;color:#5c6078;text-transform:uppercase;letter-spacing:0.5px;";
+        label.textContent = f.label;
+        var val = document.createElement("div");
+        val.style.cssText = "font-size:13px;color:" + (f.color || "#f0f0f5") + ";font-weight:500;";
+        val.textContent = f.value;
+        field.appendChild(label);
+        field.appendChild(val);
+        mobDetailInner.appendChild(field);
+      });
+      mobDetail.appendChild(mobDetailInner);
+      mobWrap.appendChild(mobDetail);
+
+      mobTop.onclick = function() {
+        var isOpen = mobDetail.style.maxHeight && mobDetail.style.maxHeight !== "0px";
+        if (isOpen) {
+          mobDetail.style.maxHeight = "0";
+          mobChev.style.transform = "rotate(0deg)";
+        } else {
+          mobDetail.style.maxHeight = "300px";
+          mobChev.style.transform = "rotate(90deg)";
+        }
+      };
+
+      detailContainer.appendChild(mobWrap);
 
       detailContainer.appendChild(pRow);
     });
