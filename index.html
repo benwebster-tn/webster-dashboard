@@ -637,7 +637,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   /* Ensure mobile scroll works */
   body, #root { overflow-y: auto; -webkit-overflow-scrolling: touch; }
   /* Allow scrollable lists inside cards on mobile */
-  .card { overflow: visible !important; -webkit-overflow-scrolling: touch; }
+  .card { overflow-x: hidden !important; overflow-y: visible !important; -webkit-overflow-scrolling: touch; }
   /* Remove nested scroll containers on mobile — let the page scroll instead */
   .ren-client-list, .bob-client-list { max-height: none !important; overflow-y: visible !important; }
 }
