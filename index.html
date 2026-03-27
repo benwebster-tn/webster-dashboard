@@ -618,6 +618,33 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   .detail-panel { max-height: 70vh; overflow-y: auto; }
   .comp-layout { flex-direction: column !important; }
   .comp-layout > div { width: 100% !important; }
+
+  /* Data table rows — card layout on mobile */
+  .ren-row, .ren-row-hdr { grid-template-columns: 1fr 1fr !important; gap: 6px 12px !important; padding: 10px 14px !important; }
+  .ren-row > div, .ren-row-hdr > div { text-align: left !important; }
+  .ren-row .ren-name { grid-column: 1 / -1; }
+  .ren-row .ren-chev { display: none; }
+  .ren-row-hdr { display: none !important; }
+
+  .bob-row, .bob-row-hdr { grid-template-columns: 1fr 1fr !important; gap: 6px 12px !important; padding: 10px 14px !important; }
+  .bob-row > div { text-align: left !important; }
+  .bob-row .bob-name { grid-column: 1 / -1; }
+  .bob-row .bob-phone, .bob-row .bob-email { font-size: 11px; }
+  .bob-row .bob-chev { display: none; }
+  .bob-row-hdr { display: none !important; }
+
+  .canc-row { grid-template-columns: 1fr 1fr !important; gap: 6px 12px !important; padding: 10px 14px !important; }
+  .canc-row > div { text-align: left !important; }
+  .canc-row .canc-name { grid-column: 1 / -1; }
+
+  .data-label { display: block; font-size: 9px; color: #5c6078; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* NB view — prevent cutoff */
+  .grid-sidebar { gap: 16px !important; }
+  .detail-panel { max-height: none; }
+  #nb-view-queue { overflow-x: hidden; }
+  .nav-tabs { flex-wrap: wrap; gap: 6px; }
+  .nav-tab { font-size: 11px; padding: 6px 10px; }
 }
 @media (max-width: 480px) {
   .header-left h1 { font-size: 18px; }
@@ -626,7 +653,18 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   .health-ring { width: 80px; height: 80px; }
   .health-ring-value { font-size: 22px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
+
+  .ren-row, .bob-row, .canc-row { grid-template-columns: 1fr !important; gap: 4px !important; }
+  .ren-row > div, .bob-row > div, .canc-row > div { text-align: left !important; }
 }
+/* ═══ Data Table Row Responsive Classes ═══ */
+.ren-row { display:grid; grid-template-columns:1.8fr 0.8fr 1fr 0.8fr 0.8fr 0.4fr 0.4fr 0.4fr 36px; align-items:center; padding:10px 14px; cursor:pointer; transition:background 0.2s; }
+.ren-row-hdr { display:grid; grid-template-columns:1.8fr 0.8fr 1fr 0.8fr 0.8fr 0.4fr 0.4fr 0.4fr 36px; padding:6px 14px; border-bottom:1px solid #2a2d3a; }
+.bob-row { display:grid; grid-template-columns:2fr 1.2fr 1.2fr 0.8fr 0.8fr 0.6fr 30px; align-items:center; padding:12px 16px; cursor:pointer; transition:background 0.2s; }
+.bob-row-hdr { display:grid; grid-template-columns:2fr 1.2fr 1.2fr 0.8fr 0.8fr 0.6fr 30px; padding:8px 16px; border-bottom:1px solid #2a2d3a; }
+.canc-row { display:grid; grid-template-columns:1.8fr 0.5fr 0.8fr 0.8fr 0.8fr 0.9fr 1.4fr; padding:10px 20px; font-size:13px; align-items:center; }
+.data-label { display:none; }
+
 /* Safe area for notched phones */
 body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 
@@ -5917,11 +5955,12 @@ function renderRenewalContent(container, renData, retPct) {
         row.style.cssText = "border:1px solid #2a2d3a;border-radius:10px;margin-bottom:6px;overflow:hidden;transition:all 0.2s;";
 
         var hdr = document.createElement("div");
-        hdr.style.cssText = "display:grid;grid-template-columns:1.8fr 0.8fr 1fr 0.8fr 0.8fr 0.4fr 0.4fr 0.4fr 36px;align-items:center;padding:10px 14px;cursor:pointer;transition:background 0.2s;";
+        hdr.className = "ren-row";
         hdr.onmouseover = function() { hdr.style.background = "rgba(251,191,36,0.05)"; };
         hdr.onmouseout = function() { hdr.style.background = ""; };
 
         var nameCol = document.createElement("div");
+        nameCol.className = "ren-name";
         nameCol.style.cssText = "display:flex;align-items:center;gap:8px;";
         var dot = document.createElement("div");
         dot.style.cssText = "width:8px;height:8px;border-radius:50%;flex-shrink:0;background:" + (cl.cancelled ? C.red : cl.nonRenewed ? C.purple : cl.paid ? C.green : cl.unpaid10 ? C.amber : C.red) + ";";
@@ -6003,6 +6042,7 @@ function renderRenewalContent(container, renData, retPct) {
         hdr.appendChild(paidCol);
 
         var chev = document.createElement("div");
+        chev.className = "ren-chev";
         chev.style.cssText = "text-align:center;font-size:12px;color:" + C.t3 + ";transition:transform 0.2s;";
         chev.textContent = "\u25B6";
         hdr.appendChild(chev);
@@ -6821,7 +6861,7 @@ function renderBobContent(container, bob) {
 
   // Column headers for customer list
   var colHeaders = document.createElement("div");
-  colHeaders.style.cssText = "display:grid;grid-template-columns:2fr 1.2fr 1.2fr 0.8fr 0.8fr 0.6fr 30px;padding:8px 16px;border-bottom:1px solid #2a2d3a;";
+  colHeaders.className = "bob-row-hdr";
   var hdrs = ["Name", "Phone", "Email", "Policies", "Premium", "Agent", ""];
   hdrs.forEach(function(h) {
     var hd = document.createElement("div");
@@ -6888,11 +6928,12 @@ function renderBobContent(container, bob) {
       custRow.style.cssText = "border:1px solid #2a2d3a;border-radius:12px;margin-bottom:8px;overflow:hidden;transition:all 0.2s;";
 
       var rowHeader = document.createElement("div");
-      rowHeader.style.cssText = "display:grid;grid-template-columns:2fr 1.2fr 1.2fr 0.8fr 0.8fr 0.6fr 30px;align-items:center;padding:12px 16px;cursor:pointer;transition:background 0.2s;";
+      rowHeader.className = "bob-row";
       rowHeader.onmouseover = function() { this.style.background = "rgba(79,140,255,0.06)"; };
       rowHeader.onmouseout = function() { this.style.background = ""; };
 
       var nameCol = document.createElement("div");
+      nameCol.className = "bob-name";
       nameCol.style.cssText = "display:flex;align-items:center;gap:10px;";
       var nameText = document.createElement("span");
       nameText.style.cssText = "font-size:14px;font-weight:600;color:" + C.t1 + ";";
@@ -6909,12 +6950,14 @@ function renderBobContent(container, bob) {
 
       // Phone column
       var phoneCol = document.createElement("div");
+      phoneCol.className = "bob-phone";
       phoneCol.style.cssText = "font-size:12px;color:" + C.t2 + ";overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
       phoneCol.textContent = cust.phone || "-";
       rowHeader.appendChild(phoneCol);
 
       // Email column
       var emailCol = document.createElement("div");
+      emailCol.className = "bob-email";
       emailCol.style.cssText = "font-size:11px;color:" + C.t2 + ";overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
       emailCol.textContent = cust.email || "-";
       rowHeader.appendChild(emailCol);
@@ -6935,6 +6978,7 @@ function renderBobContent(container, bob) {
       rowHeader.appendChild(agentCol);
 
       var chevron = document.createElement("div");
+      chevron.className = "bob-chev";
       chevron.style.cssText = "font-size:14px;color:" + C.t3 + ";text-align:center;transition:transform 0.2s;";
       chevron.textContent = "\u25B6";
       rowHeader.appendChild(chevron);
@@ -7278,9 +7322,11 @@ function renderCancellationsView() {
 
     monthRows.forEach(function(row) {
       var pRow = document.createElement("div");
-      pRow.style.cssText = "display:grid;grid-template-columns:1.8fr 0.5fr 0.8fr 0.8fr 0.8fr 0.9fr 1.4fr;padding:10px 20px;border-top:1px solid " + C.bdr + ";font-size:13px;align-items:center;";
+      pRow.className = "canc-row";
+      pRow.style.borderTop = "1px solid " + C.bdr;
 
       var nameDiv = document.createElement("div");
+      nameDiv.className = "canc-name";
       nameDiv.style.cssText = "font-weight:500;color:" + C.t1 + ";";
       nameDiv.textContent = row.name;
       pRow.appendChild(nameDiv);
