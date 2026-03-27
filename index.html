@@ -636,6 +636,8 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   .queue-stage { font-size: 9px; padding: 2px 6px; }
   /* Ensure mobile scroll works */
   body, #root { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  /* Allow scrollable lists inside cards on mobile */
+  .card { overflow: auto; -webkit-overflow-scrolling: touch; }
 }
 @media (max-width: 480px) {
   .header-left h1 { font-size: 18px; }
