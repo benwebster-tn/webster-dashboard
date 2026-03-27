@@ -601,7 +601,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   .header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
   .header-right { width: 100%; justify-content: space-between; }
   .header-left h1 { font-size: 20px; }
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr !important; }
   .grid-2x1, .grid-1x1 { grid-template-columns: 1fr; }
   .card { padding: 16px; border-radius: 12px; }
   .summary-box-value { font-size: 18px; }
@@ -625,6 +625,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #0f1117; col
   .gauge-value { font-size: 22px; }
   .health-ring { width: 80px; height: 80px; }
   .health-ring-value { font-size: 22px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr !important; }
 }
 /* Safe area for notched phones */
 body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
@@ -5329,7 +5330,8 @@ function renderBoundBizMonths_(container, sheetMonths, mp, carrierColors, monthN
       contestBanner.style.cssText = "padding:12px 16px;background:rgba(79,140,255,0.08);border-radius:10px;margin-bottom:12px;";
       contestBanner.innerHTML = '<div style="font-size:13px;font-weight:700;color:' + C.blue + ';margin-bottom:8px;">\uD83C\uDFC5 Erie March Contest</div>';
       var contestGrid = document.createElement("div");
-      contestGrid.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;";
+      contestGrid.className = "grid-4";
+      contestGrid.style.cssText = "gap:8px;";
       var contestItems = [
         {label:"Erie Apps", val: sm.erieContest.erieApps || 0},
         {label:"Travelers", val: sm.erieContest.travApps || 0},
@@ -5402,7 +5404,8 @@ function renderBoundBizMonths_(container, sheetMonths, mp, carrierColors, monthN
       clDetail.style.cssText = "display:none;padding:10px 0 10px 28px;background:rgba(255,255,255,0.015);border-top:1px solid rgba(255,255,255,0.04);";
 
       var clGrid = document.createElement("div");
-      clGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 16px;";
+      clGrid.className = "grid-3";
+      clGrid.style.cssText = "gap:8px 16px;";
 
       var clFields = [
         {label: "Carrier", value: cl.carrier, color: carrierColors[cl.carrier] || C.blue},
@@ -6013,7 +6016,8 @@ function renderRenewalContent(container, renData, retPct) {
         detailInner.style.cssText = "padding:14px 16px;";
 
         var dGrid = document.createElement("div");
-        dGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px 20px;";
+        dGrid.className = "grid-4";
+        dGrid.style.cssText = "gap:10px 20px;";
         var readOnlyFields = [
           { l: "Carrier", v: cl.carrier || "\u2014", c: C.t1 },
           { l: "Eff Date", v: cl.effDateFull || cl.effDate || "\u2014", c: "#c4c7d4" },
@@ -6050,7 +6054,8 @@ function renderRenewalContent(container, renData, retPct) {
         editSection.appendChild(editLabel);
 
         var premRow = document.createElement("div");
-        premRow.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:12px;";
+        premRow.className = "grid-4";
+        premRow.style.cssText = "gap:10px;align-items:end;margin-bottom:12px;";
 
         var curPremWrap = document.createElement("div");
         curPremWrap.innerHTML = '<div style="font-size:10px;color:#8b8fa3;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:3px;">Current Premium</div>';
@@ -6114,7 +6119,8 @@ function renderRenewalContent(container, renData, retPct) {
 
         // Toggles
         var toggleRow = document.createElement("div");
-        toggleRow.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px;";
+        toggleRow.className = "grid-4";
+        toggleRow.style.cssText = "gap:10px;margin-bottom:12px;";
 
         function makeToggle(label, isOn, onColor, offColor) {
           var wrap = document.createElement("div");
@@ -6309,7 +6315,7 @@ function renderRenewalContent(container, renData, retPct) {
           '<span style="font-size:16px;font-weight:700;color:' + C.amber + ';">' + mt.month + '</span>' +
           '<span style="font-size:12px;color:' + C.t3 + ';">' + (mt.retention > 0 ? mt.retention.toFixed(1) + '% retention' : '') + '</span>' +
           '</div>' +
-          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">' +
+          '<div class="grid-4" style="gap:8px;">' +
           '<div class="small-stat"><div class="small-stat-value" style="color:' + C.amber + '">' + fmt(mt.premiumUp) + '</div><div class="small-stat-label">Up</div></div>' +
           '<div class="small-stat"><div class="small-stat-value" style="color:' + C.green + '">' + fmt(mt.renewed) + '</div><div class="small-stat-label">Renewed</div></div>' +
           '<div class="small-stat"><div class="small-stat-value" style="color:' + C.red + '">' + fmt(mt.netLost) + '</div><div class="small-stat-label">Net Lost</div></div>' +
@@ -6340,7 +6346,8 @@ function renderRenewalContent(container, renData, retPct) {
     mHdr.appendChild(mTop);
 
     var mStats = document.createElement("div");
-    mStats.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:8px;";
+    mStats.className = "grid-3";
+    mStats.style.cssText = "gap:8px;";
     var mItems = [
       { v: fmt(m.premiumUp), l: "Up", c: C.amber },
       { v: fmt(m.premiumRenewed), l: "Renewed", c: C.green },
@@ -6669,7 +6676,8 @@ function renderBobContent(container, bob) {
 
   // Top Summary Cards
   var grid4 = document.createElement("div");
-  grid4.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:24px;";
+  grid4.className = "grid-4";
+  grid4.style.cssText = "margin-bottom:24px;";
 
   var avgPrem = bob.uniqueCustomers > 0 ? bob.totalPremium / bob.uniqueCustomers : 0;
 
@@ -6697,7 +6705,8 @@ function renderBobContent(container, bob) {
 
   // Carrier + Agent + Type Breakdown
   var breakdownGrid = document.createElement("div");
-  breakdownGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:24px;";
+  breakdownGrid.className = "grid-3";
+  breakdownGrid.style.cssText = "margin-bottom:24px;";
 
   var carrierCard = document.createElement("div");
   carrierCard.className = "card";
@@ -7148,7 +7157,8 @@ function renderCancellationsView() {
 
   // Summary strip
   var strip = document.createElement("div");
-  strip.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;";
+  strip.className = "grid-4";
+  strip.style.cssText = "gap:16px;margin-bottom:24px;";
 
   var summaryItems = [
     { label: "TOTAL POLICIES", value: (summary.totalPolicies || rows.length || 0) + " (" + (summary.personalCount || 0) + "P / " + (summary.commercialCount || 0) + "C)", color: C.red },
@@ -8000,7 +8010,8 @@ function renderQuotingHubView() {
 
   // Intake Paths Info Bar
   var pathsBar = document.createElement("div");
-  pathsBar.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;";
+  pathsBar.className = "grid-3";
+  pathsBar.style.cssText = "gap:12px;margin-bottom:18px;";
   var paths = [
     { icon: "\uD83D\uDCC4", title: "Upload & Extract", desc: "Upload dec pages, DLs, photos — AI extracts data and pre-fills the quote", color: C.blue, tag: "Replaces Email" },
     { icon: "\u270F\uFE0F", title: "Online Form", desc: "Manual entry — type in client info directly, upload is optional", color: C.purple, tag: "Manual Entry" },
