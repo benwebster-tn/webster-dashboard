@@ -1522,9 +1522,14 @@ function renderMainView() {
   const yp = yearProg();
   const bobPct = data.bob.target > 0 ? data.bob.current / data.bob.target * 100 : 0;
   const newPct = data.newBiz.target > 0 ? data.newBiz.ytdPremiums / data.newBiz.target * 100 : 0;
-  const retPct = data.renewals.upForRenewal > 0 ? data.renewals.renewedYtd / data.renewals.upForRenewal * 100 : 0;
+  const retPctRenewalOnly = data.renewals.upForRenewal > 0 ? data.renewals.renewedYtd / data.renewals.upForRenewal * 100 : 0;
+  // Use True Retention (includes cancellation losses) when health data is loaded
+  const hd = appState.healthData;
+  const retPct = hd ? (hd.retention.trueOverall || retPctRenewalOnly) : retPctRenewalOnly;
   const newPace = Math.min((newPct / yp) * 100, 100);
-  const health = Math.round(newPace * 0.3 + retPct * 0.35 + bobPct * 0.2 + 75 * 0.15);
+  // Loss Budget Health: % of budget remaining (100% = no losses, 0% = budget exhausted)
+  const lossBudgetHealth = hd ? Math.max(0, 100 - hd.lossBudget.pctUsed) : 75;
+  const health = Math.round(newPace * 0.3 + retPct * 0.35 + bobPct * 0.2 + lossBudgetHealth * 0.15);
   const bobDiff = data.bob.current - data.bob.target * (yp / 100);
   const newDiff = data.newBiz.ytdPremiums - data.newBiz.target * (yp / 100);
   const q1n = (data.monthly.newPremiums[0] || 0) + (data.monthly.newPremiums[1] || 0) + (data.monthly.newPremiums[2] || 0);
@@ -1725,9 +1730,9 @@ function renderMainView() {
   healthStats.style.flex = "1";
   const metrics = [
     { l: "New Biz Pace", p: newPace, c: C.blue },
-    { l: "Retention", p: retPct, c: C.green },
+    { l: "True Retention", p: retPct, c: C.green },
     { l: "BOB Growth", p: bobPct, c: C.amber },
-    { l: "Pipeline", p: 75, c: C.purple }
+    { l: "Loss Budget", p: lossBudgetHealth, c: C.purple }
   ];
   metrics.forEach(h => {
     const row = document.createElement("div");
@@ -1755,7 +1760,7 @@ function renderMainView() {
 
   const healthNote = document.createElement("div");
   healthNote.style.cssText = "text-align:center;font-size:10px;color:" + C.t3 + ";margin-top:6px;";
-  healthNote.textContent = "Composite of pace, retention, growth & pipeline";
+  healthNote.textContent = "30% Pace + 35% True Retention + 20% BOB + 15% Loss Budget";
   healthCard.appendChild(healthNote);
 
   grid2x1.appendChild(healthCard);
@@ -9852,9 +9857,10 @@ function renderHealthView() {
   var yp = yearProg();
   var bobPct = data.bob.target > 0 ? data.bob.current / data.bob.target * 100 : 0;
   var newPct = data.newBiz.target > 0 ? data.newBiz.ytdPremiums / data.newBiz.target * 100 : 0;
-  var retPct = data.renewals.upForRenewal > 0 ? data.renewals.renewedYtd / data.renewals.upForRenewal * 100 : 0;
+  var retPct = hd.retention.trueOverall || (data.renewals.upForRenewal > 0 ? data.renewals.renewedYtd / data.renewals.upForRenewal * 100 : 0);
   var newPace = Math.min((newPct / yp) * 100, 100);
-  var healthScore = Math.round(newPace * 0.3 + retPct * 0.35 + bobPct * 0.2 + 75 * 0.15);
+  var lossBudgetHealth = Math.max(0, 100 - hd.lossBudget.pctUsed);
+  var healthScore = Math.round(newPace * 0.3 + retPct * 0.35 + bobPct * 0.2 + lossBudgetHealth * 0.15);
 
   // ─── 2-COL GRID: Score card + Retention card ───
   var topGrid = document.createElement("div");
@@ -9874,9 +9880,9 @@ function renderHealthView() {
   metricsWrap.style.flex = "1";
   var compactMetrics = [
     { l: "New Biz Pace", p: newPace, c: C.blue },
-    { l: "Retention", p: retPct, c: C.green },
+    { l: "True Retention", p: retPct, c: C.green },
     { l: "BOB Growth", p: bobPct, c: C.amber },
-    { l: "Pipeline", p: 75, c: C.purple }
+    { l: "Loss Budget", p: lossBudgetHealth, c: C.purple }
   ];
   compactMetrics.forEach(function(h) {
     var row = document.createElement("div");
@@ -9888,7 +9894,7 @@ function renderHealthView() {
   scoreCard.appendChild(scoreInner);
   var scoreNote = document.createElement("div");
   scoreNote.style.cssText = "text-align:center;font-size:10px;color:" + C.t3 + ";margin-top:6px;";
-  scoreNote.textContent = "Composite of pace, retention, growth & pipeline";
+  scoreNote.textContent = "30% Pace + 35% True Retention + 20% BOB + 15% Loss Budget";
   scoreCard.appendChild(scoreNote);
   topGrid.appendChild(scoreCard);
 
