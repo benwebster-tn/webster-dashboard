@@ -929,6 +929,134 @@ function closeCancelModal() {
   if (el) el.remove();
 }
 
+// ─── DOCS PREVIEW MODAL ─────────────────────────────
+function closeDocsPreviewModal() {
+  var el = document.getElementById("docs-preview-overlay");
+  if (el) el.remove();
+}
+
+function showDocsPreviewModal(opts) {
+  // opts: { customerName, customerEmail, contactId, fileIds, fileNames, onSent }
+  closeDocsPreviewModal();
+
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "docs-preview-overlay";
+  overlay.onclick = function(e) { if (e.target === overlay) closeDocsPreviewModal(); };
+
+  var box = document.createElement("div");
+  box.className = "modal-box";
+  box.style.maxWidth = "540px";
+
+  // Title
+  var title = document.createElement("div");
+  title.className = "modal-title";
+  title.style.color = C.green;
+  title.innerHTML = '<span style="font-size:20px;">&#9993;</span> Email Documents to Client';
+  box.appendChild(title);
+
+  // Recipient info
+  var recipientBox = document.createElement("div");
+  recipientBox.style.cssText = "background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.15);border-radius:12px;padding:14px;margin-bottom:16px;";
+
+  var fields = [
+    { l: "To", v: opts.customerEmail },
+    { l: "CC", v: "jess@websterinsurancetn.com, alexis@websterinsurancetn.com" },
+    { l: "Subject", v: "Your Insurance Documents - Webster Insurance" }
+  ];
+  fields.forEach(function(f) {
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:baseline;gap:8px;margin-bottom:6px;";
+    row.innerHTML = '<span style="font-size:10px;color:' + C.t3 + ';text-transform:uppercase;letter-spacing:0.6px;font-weight:700;min-width:55px;">' + f.l + '</span>' +
+      '<span style="font-size:13px;color:' + C.t1 + ';word-break:break-all;">' + f.v + '</span>';
+    recipientBox.appendChild(row);
+  });
+  box.appendChild(recipientBox);
+
+  // Email body preview
+  var bodyPreview = document.createElement("div");
+  bodyPreview.style.cssText = "background:#12141c;border:1px solid #2a2d3a;border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px;color:" + C.t2 + ";line-height:1.6;";
+  var firstName = (opts.customerName || "").split(" ")[0];
+  firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  bodyPreview.innerHTML = '<p style="margin:0 0 8px;">Hi ' + firstName + ',</p>' +
+    '<p style="margin:0 0 12px;">Please find your requested insurance documents attached to this email.</p>' +
+    '<p style="margin:0 0 4px;font-weight:600;color:' + C.t1 + ';">Attached Documents:</p>';
+
+  var fileList = document.createElement("ul");
+  fileList.style.cssText = "margin:4px 0 12px;padding-left:18px;";
+  opts.fileNames.forEach(function(name) {
+    var li = document.createElement("li");
+    li.style.cssText = "padding:2px 0;color:" + C.t2 + ";font-size:12px;";
+    li.textContent = name;
+    fileList.appendChild(li);
+  });
+  bodyPreview.appendChild(fileList);
+
+  bodyPreview.innerHTML += '<p style="margin:0;color:' + C.t3 + ';font-size:12px;">Best regards,<br>Webster Insurance<br>615.804.4423</p>';
+  box.appendChild(bodyPreview);
+
+  // Status area
+  var statusMsg = document.createElement("div");
+  statusMsg.style.cssText = "font-size:13px;min-height:20px;margin-bottom:8px;font-weight:600;text-align:center;";
+  box.appendChild(statusMsg);
+
+  // Buttons
+  var btnRow = document.createElement("div");
+  btnRow.className = "modal-btns";
+
+  var cancelBtn = document.createElement("button");
+  cancelBtn.className = "modal-btn cancel-modal-btn";
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.onclick = closeDocsPreviewModal;
+  btnRow.appendChild(cancelBtn);
+
+  var sendBtn = document.createElement("button");
+  sendBtn.className = "modal-btn confirm-add";
+  sendBtn.textContent = "Send " + opts.fileNames.length + " Document" + (opts.fileNames.length !== 1 ? "s" : "");
+  sendBtn.onclick = function() {
+    sendBtn.disabled = true;
+    sendBtn.textContent = "Sending...";
+    sendBtn.style.opacity = "0.5";
+    cancelBtn.disabled = true;
+    statusMsg.style.color = C.blue;
+    statusMsg.textContent = "Downloading files from QQ Catalyst and sending...";
+
+    fetchGS("actionSendDocsToClient", function(r) {
+      if (r && r.ok) {
+        statusMsg.style.color = C.green;
+        statusMsg.textContent = "Documents sent to " + opts.customerEmail + "!";
+        sendBtn.textContent = "Sent!";
+        sendBtn.style.background = "linear-gradient(135deg,#34d399,#059669)";
+        if (opts.onSent) opts.onSent();
+        setTimeout(closeDocsPreviewModal, 2000);
+      } else {
+        statusMsg.style.color = C.red;
+        statusMsg.textContent = "Failed: " + (r ? r.error : "Unknown error");
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Retry Send";
+        sendBtn.style.opacity = "1";
+        cancelBtn.disabled = false;
+      }
+    }, function(err) {
+      statusMsg.style.color = C.red;
+      statusMsg.textContent = "Error: " + err;
+      sendBtn.disabled = false;
+      sendBtn.textContent = "Retry Send";
+      sendBtn.style.opacity = "1";
+      cancelBtn.disabled = false;
+    }, {
+      customerName: opts.customerName,
+      customerEmail: opts.customerEmail,
+      fileIds: opts.fileIds
+    });
+  };
+  btnRow.appendChild(sendBtn);
+  box.appendChild(btnRow);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 // ─── ADD CUSTOMER MODAL ──────────────────────────────
 function closeAddCustomerModal() {
   var el = document.getElementById("add-customer-modal-overlay");
@@ -7267,6 +7395,218 @@ function renderBobContent(container, bob) {
       });
       detailInner.appendChild(polStacked);
 
+      // ── Documents Section ──────────────────────────────────────
+      var docsSection = document.createElement("div");
+      docsSection.style.cssText = "margin-top:16px;padding-top:14px;border-top:1px solid #2a2d3a;";
+
+      var docsRow = document.createElement("div");
+      docsRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;";
+
+      var docsLabel = document.createElement("span");
+      docsLabel.style.cssText = "font-size:12px;font-weight:600;color:" + C.t2 + ";letter-spacing:0.5px;";
+      docsLabel.textContent = "CUSTOMER DOCUMENTS";
+      docsRow.appendChild(docsLabel);
+
+      var docsBtn = document.createElement("button");
+      docsBtn.style.cssText = "background:linear-gradient(135deg," + C.blue + "," + C.purple + ");color:#fff;border:none;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity 0.2s;";
+      docsBtn.textContent = "Load Documents";
+      docsBtn.onmouseover = function() { this.style.opacity = "0.85"; };
+      docsBtn.onmouseout = function() { this.style.opacity = "1"; };
+      docsRow.appendChild(docsBtn);
+      docsSection.appendChild(docsRow);
+
+      var docsContainer = document.createElement("div");
+      docsContainer.style.cssText = "margin-top:10px;";
+      docsSection.appendChild(docsContainer);
+
+      // Wire up Load Documents button (IIFE to capture cust)
+      (function(custName, custEmail, docsContainer, docsBtn, detail, cust) {
+        docsBtn.onclick = function(e) {
+          e.stopPropagation();
+          docsBtn.disabled = true;
+          docsBtn.textContent = "Loading...";
+          docsBtn.style.opacity = "0.6";
+          docsContainer.innerHTML = "";
+
+          fetchGS("actionFindAndListDocs", function(r) {
+            docsBtn.disabled = false;
+            docsBtn.textContent = "Refresh";
+            docsBtn.style.opacity = "1";
+
+            if (!r || !r.ok) {
+              docsContainer.innerHTML = '<div style="padding:12px;color:' + C.red + ';font-size:12px;background:rgba(248,113,113,0.08);border-radius:8px;">' +
+                (r && r.error ? r.error : 'Failed to load documents') +
+                (r && r.notFound ? '<br><span style="color:' + C.t3 + ';font-size:11px;">Try running "Refresh Contact Map" from the Apps Script editor.</span>' : '') +
+                '</div>';
+              detail.style.maxHeight = (cust.policies.length * 200 + 450) + "px";
+              return;
+            }
+
+            var files = r.data.files || [];
+            var contactId = r.data.contactId;
+
+            if (files.length === 0) {
+              docsContainer.innerHTML = '<div style="padding:12px;color:' + C.t3 + ';font-size:12px;text-align:center;">No documents found for this customer in QQ Catalyst.</div>';
+              detail.style.maxHeight = (cust.policies.length * 200 + 450) + "px";
+              return;
+            }
+
+            // Build file list with checkboxes
+            var fileListDiv = document.createElement("div");
+            fileListDiv.style.cssText = "max-height:200px;overflow-y:auto;border:1px solid #2a2d3a;border-radius:8px;";
+
+            var selectAllRow = document.createElement("div");
+            selectAllRow.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #2a2d3a;background:rgba(79,140,255,0.04);";
+            var selectAllCb = document.createElement("input");
+            selectAllCb.type = "checkbox";
+            selectAllCb.style.cssText = "accent-color:" + C.blue + ";width:14px;height:14px;";
+            selectAllRow.appendChild(selectAllCb);
+            var selectAllLabel = document.createElement("span");
+            selectAllLabel.style.cssText = "font-size:11px;color:" + C.t3 + ";font-weight:600;";
+            selectAllLabel.textContent = "Select All (" + files.length + " files)";
+            selectAllRow.appendChild(selectAllLabel);
+            fileListDiv.appendChild(selectAllRow);
+
+            var checkboxes = [];
+
+            files.forEach(function(file) {
+              var fileRow = document.createElement("div");
+              fileRow.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 10px;transition:background 0.15s;";
+              fileRow.onmouseover = function() { this.style.background = "rgba(79,140,255,0.06)"; };
+              fileRow.onmouseout = function() { this.style.background = ""; };
+
+              var cb = document.createElement("input");
+              cb.type = "checkbox";
+              cb.style.cssText = "accent-color:" + C.blue + ";width:14px;height:14px;flex-shrink:0;";
+              cb.dataset.fileId = file.id;
+              cb.dataset.fileName = file.fileName;
+              checkboxes.push(cb);
+              fileRow.appendChild(cb);
+
+              // File type badge
+              var badge = document.createElement("span");
+              var badgeColor = file.fileType === "PDF" ? C.red :
+                              file.fileType === "PNG" || file.fileType === "JPG" || file.fileType === "JPEG" ? C.teal :
+                              file.fileType === "DOCX" || file.fileType === "DOC" ? C.blue : C.t3;
+              badge.style.cssText = "font-size:9px;font-weight:700;color:" + badgeColor + ";background:" + badgeColor + "18;padding:2px 6px;border-radius:4px;min-width:30px;text-align:center;flex-shrink:0;";
+              badge.textContent = file.fileType;
+              fileRow.appendChild(badge);
+
+              var nameSpan = document.createElement("span");
+              nameSpan.style.cssText = "font-size:12px;color:" + C.t1 + ";flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+              nameSpan.textContent = file.displayName;
+              nameSpan.title = file.displayName;
+              fileRow.appendChild(nameSpan);
+
+              var sizeSpan = document.createElement("span");
+              sizeSpan.style.cssText = "font-size:10px;color:" + C.t3 + ";flex-shrink:0;display:none;";
+              if (window.innerWidth > 600) sizeSpan.style.display = "";
+              if (file.fileSize) {
+                sizeSpan.textContent = file.fileSize > 1048576 ? (file.fileSize / 1048576).toFixed(1) + " MB" :
+                                       Math.round(file.fileSize / 1024) + " KB";
+              }
+              fileRow.appendChild(sizeSpan);
+
+              var dateSpan = document.createElement("span");
+              dateSpan.style.cssText = "font-size:10px;color:" + C.t3 + ";flex-shrink:0;min-width:70px;text-align:right;display:none;";
+              if (window.innerWidth > 600) dateSpan.style.display = "";
+              if (file.createdOn) {
+                var d = new Date(file.createdOn);
+                dateSpan.textContent = (d.getMonth()+1) + "/" + d.getDate() + "/" + d.getFullYear();
+              }
+              fileRow.appendChild(dateSpan);
+
+              fileListDiv.appendChild(fileRow);
+            });
+
+            // Select All handler
+            selectAllCb.onchange = function() {
+              checkboxes.forEach(function(cb) { cb.checked = selectAllCb.checked; });
+              updateSelectedCount();
+            };
+
+            docsContainer.appendChild(fileListDiv);
+
+            // Email button row
+            var emailRow = document.createElement("div");
+            emailRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-top:10px;";
+
+            var selectedCount = document.createElement("span");
+            selectedCount.style.cssText = "font-size:11px;color:" + C.t3 + ";";
+            selectedCount.textContent = "0 files selected";
+            emailRow.appendChild(selectedCount);
+
+            function updateSelectedCount() {
+              var count = checkboxes.filter(function(cb) { return cb.checked; }).length;
+              selectedCount.textContent = count + " file" + (count !== 1 ? "s" : "") + " selected";
+              emailBtn.disabled = count === 0;
+              emailBtn.style.opacity = count === 0 ? "0.4" : "1";
+            }
+            checkboxes.forEach(function(cb) { cb.addEventListener("change", updateSelectedCount); });
+
+            var emailBtn = document.createElement("button");
+            emailBtn.style.cssText = "background:linear-gradient(135deg," + C.green + "," + C.teal + ");color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:opacity 0.2s;opacity:0.4;";
+            emailBtn.disabled = true;
+            emailBtn.textContent = "Email to Client";
+            emailBtn.onmouseover = function() { if (!this.disabled) this.style.opacity = "0.85"; };
+            emailBtn.onmouseout = function() { if (!this.disabled) this.style.opacity = "1"; };
+            emailRow.appendChild(emailBtn);
+            docsContainer.appendChild(emailRow);
+
+            // Email button opens preview modal (no approval gate)
+            emailBtn.onclick = function(e) {
+              e.stopPropagation();
+              var selected = checkboxes.filter(function(cb) { return cb.checked; });
+              if (selected.length === 0) return;
+
+              if (!custEmail) {
+                alert("No email address on file for " + custName + ". Please add their email to the BOB first.");
+                return;
+              }
+
+              var fileIds = selected.map(function(cb) { return parseInt(cb.dataset.fileId); });
+              var fileNamesList = selected.map(function(cb) { return cb.dataset.fileName; });
+
+              showDocsPreviewModal({
+                customerName: custName,
+                customerEmail: custEmail,
+                contactId: contactId,
+                fileIds: fileIds,
+                fileNames: fileNamesList,
+                onSent: function() {
+                  emailBtn.textContent = "Sent!";
+                  emailBtn.style.background = "linear-gradient(135deg,#34d399,#059669)";
+                  emailBtn.disabled = true;
+                  emailBtn.style.opacity = "0.7";
+                  setTimeout(function() {
+                    emailBtn.textContent = "Email to Client";
+                    emailBtn.style.background = "linear-gradient(135deg," + C.green + "," + C.teal + ")";
+                    emailBtn.disabled = false;
+                    emailBtn.style.opacity = "1";
+                    updateSelectedCount();
+                  }, 4000);
+                }
+              });
+            };
+
+            // Expand detail to fit docs content
+            var totalHeight = cust.policies.length * 200 + 250 + Math.min(files.length * 32 + 80, 280) + 80;
+            detail.style.maxHeight = totalHeight + "px";
+
+          }, function(err) {
+            docsBtn.disabled = false;
+            docsBtn.textContent = "Load Documents";
+            docsBtn.style.opacity = "1";
+            docsContainer.innerHTML = '<div style="padding:12px;color:' + C.red + ';font-size:12px;">Error: ' + err + '</div>';
+          }, {
+            customerName: custName,
+            customerEmail: custEmail || ""
+          });
+        };
+      })(cust.name, cust.email, docsContainer, docsBtn, detail, cust);
+
+      detailInner.appendChild(docsSection);
+
       detail.appendChild(detailInner);
       custRow.appendChild(detail);
 
@@ -7277,7 +7617,7 @@ function renderBobContent(container, bob) {
           chevron.style.transform = "rotate(0deg)";
           custRow.style.borderColor = "#2a2d3a";
         } else {
-          detail.style.maxHeight = (cust.policies.length * 200 + 250) + "px";
+          detail.style.maxHeight = (cust.policies.length * 200 + 350) + "px";
           chevron.style.transform = "rotate(90deg)";
           custRow.style.borderColor = C.blue + "44";
         }
@@ -7291,7 +7631,7 @@ function renderBobContent(container, bob) {
           mobChev.style.transform = "rotate(0deg)";
           custRow.style.borderColor = "#2a2d3a";
         } else {
-          detail.style.maxHeight = (cust.policies.length * 200 + 250) + "px";
+          detail.style.maxHeight = (cust.policies.length * 200 + 350) + "px";
           chevron.style.transform = "rotate(90deg)";
           mobChev.style.transform = "rotate(90deg)";
           custRow.style.borderColor = C.blue + "44";
