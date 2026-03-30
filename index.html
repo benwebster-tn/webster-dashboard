@@ -9885,19 +9885,26 @@ function renderHealthView() {
   scoreCard.appendChild(scoreNote);
   topGrid.appendChild(scoreCard);
 
-  // RIGHT: Weighted Retention card
+  // RIGHT: True Retention card (includes cancellations)
   var retCard = document.createElement("div");
   retCard.className = "card";
-  var retColor = hd.retention.overall >= 90 ? C.green : hd.retention.overall >= 80 ? C.amber : C.red;
-  var retColor2 = hd.retention.overall >= 90 ? C.teal : hd.retention.overall >= 80 ? "#f59e0b" : "#ef4444";
-  retCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,' + retColor + ',' + retColor2 + ');"></div><div class="card-header"><span class="icon">\uD83D\uDD04</span><span>Weighted Retention</span></div>';
+  var trueRet = hd.retention.trueOverall || hd.retention.overall;
+  var retColor = trueRet >= 90 ? C.green : trueRet >= 80 ? C.amber : C.red;
+  var retColor2 = trueRet >= 90 ? C.teal : trueRet >= 80 ? "#f59e0b" : "#ef4444";
+  var totalAtRisk = hd.retention.totalAtRisk || hd.retention.premiumUp;
+  retCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,' + retColor + ',' + retColor2 + ');"></div><div class="card-header"><span class="icon">\uD83D\uDD04</span><span>True Retention</span></div>';
   var retRow = document.createElement("div");
-  retRow.style.cssText = "display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap;";
-  retRow.innerHTML = '<span style="font-size:28px;font-weight:800;color:' + retColor + ';">' + hd.retention.overall.toFixed(1) + '%</span><span style="font-size:12px;color:' + C.t3 + ';">Goal: ' + hd.retention.goal + '% | ' + fmt(hd.retention.premiumRenewed) + ' of ' + fmt(hd.retention.premiumUp) + ' renewed</span>';
+  retRow.style.cssText = "display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap;";
+  retRow.innerHTML = '<span style="font-size:28px;font-weight:800;color:' + retColor + ';">' + trueRet.toFixed(1) + '%</span><span style="font-size:12px;color:' + C.t3 + ';">Goal: ' + hd.retention.goal + '% | ' + fmt(hd.retention.premiumRenewed) + ' of ' + fmt(totalAtRisk) + ' at risk</span>';
   retCard.appendChild(retRow);
+  // Show renewal-only retention as secondary info
+  var renewOnlyNote = document.createElement("div");
+  renewOnlyNote.style.cssText = "font-size:10px;color:" + C.t3 + ";margin-bottom:8px;";
+  renewOnlyNote.textContent = "Renewal-only: " + hd.retention.overall.toFixed(1) + "% (" + fmt(hd.retention.premiumRenewed) + " of " + fmt(hd.retention.premiumUp) + " renewed) + " + fmt(hd.leakage.totalLeakage) + " lost to cancellations";
+  retCard.appendChild(renewOnlyNote);
   var retBarTrack = document.createElement("div");
   retBarTrack.style.cssText = "width:100%;height:6px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;position:relative;";
-  retBarTrack.innerHTML = '<div style="position:absolute;left:' + Math.min(hd.retention.goal, 100) + '%;top:-2px;width:2px;height:10px;background:' + C.t2 + ';border-radius:1px;z-index:2;"></div><div style="height:100%;border-radius:4px;transition:width 1s ease;width:' + Math.min(hd.retention.overall, 100) + '%;background:linear-gradient(90deg,' + retColor + ',' + retColor2 + ');"></div>';
+  retBarTrack.innerHTML = '<div style="position:absolute;left:' + Math.min(hd.retention.goal, 100) + '%;top:-2px;width:2px;height:10px;background:' + C.t2 + ';border-radius:1px;z-index:2;"></div><div style="height:100%;border-radius:4px;transition:width 1s ease;width:' + Math.min(trueRet, 100) + '%;background:linear-gradient(90deg,' + retColor + ',' + retColor2 + ');"></div>';
   retCard.appendChild(retBarTrack);
   topGrid.appendChild(retCard);
   main.appendChild(topGrid);
@@ -9920,25 +9927,28 @@ function renderHealthView() {
   if (hd.retention.byCarrier && hd.retention.byCarrier.length > 0) {
     hd.retention.byCarrier.forEach(function(cr) {
       var crWrap = document.createElement("div");
-      var crColor = cr.retention >= 90 ? C.green : cr.retention >= 80 ? C.amber : C.red;
+      var crTrueRet = cr.trueRetention || cr.retention;
+      var crColor = crTrueRet >= 90 ? C.green : crTrueRet >= 80 ? C.amber : C.red;
       var hasPolicies = cr.policies && cr.policies.length > 0;
+      var hasCancLoss = cr.cancLostPremium > 0;
+      var canExpand = hasPolicies || hasCancLoss;
 
       // Summary row (clickable)
       var crRow = document.createElement("div");
-      crRow.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);" + (hasPolicies ? "cursor:pointer;" : "");
+      crRow.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);" + (canExpand ? "cursor:pointer;" : "");
       crRow.innerHTML =
-        '<div style="width:14px;font-size:10px;color:' + C.t3 + ';">' + (hasPolicies ? '\u25B6' : '') + '</div>' +
+        '<div style="width:14px;font-size:10px;color:' + C.t3 + ';">' + (canExpand ? '\u25B6' : '') + '</div>' +
         '<div style="width:85px;font-size:12px;font-weight:600;color:' + (carrierColors[cr.name] || C.t2) + ';white-space:nowrap;">' + cr.name + ' <span style="font-size:10px;font-weight:400;color:' + C.t3 + ';">(' + cr.clients + ')</span></div>' +
         '<div style="flex:1;height:5px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;position:relative;">' +
           '<div style="position:absolute;left:' + Math.min(hd.retention.goal, 100) + '%;top:-1px;width:1px;height:7px;background:rgba(255,255,255,0.15);z-index:2;"></div>' +
-          '<div style="height:100%;border-radius:3px;width:' + Math.min(cr.retention, 100) + '%;background:' + crColor + ';transition:width 1s ease;"></div>' +
+          '<div style="height:100%;border-radius:3px;width:' + Math.min(crTrueRet, 100) + '%;background:' + crColor + ';transition:width 1s ease;"></div>' +
         '</div>' +
-        '<div style="width:50px;text-align:right;font-size:12px;font-weight:700;color:' + crColor + ';">' + cr.retention.toFixed(1) + '%</div>' +
-        '<div style="width:130px;text-align:right;font-size:10px;color:' + C.t3 + ';white-space:nowrap;">' + fmt(cr.premiumRenewed) + ' / ' + fmt(cr.premiumUp) + '</div>';
+        '<div style="width:50px;text-align:right;font-size:12px;font-weight:700;color:' + crColor + ';">' + crTrueRet.toFixed(1) + '%</div>' +
+        '<div style="width:130px;text-align:right;font-size:10px;color:' + C.t3 + ';white-space:nowrap;">' + fmt(cr.premiumRenewed) + ' / ' + fmt(cr.totalAtRisk || cr.premiumUp) + '</div>';
       crWrap.appendChild(crRow);
 
-      // Policy detail panel (hidden by default)
-      if (hasPolicies) {
+      // Drill-down panel (hidden by default)
+      if (canExpand) {
         var detailPanel = document.createElement("div");
         detailPanel.style.cssText = "display:none;padding:4px 0 8px 24px;";
 
@@ -9946,26 +9956,79 @@ function renderHealthView() {
         var tHead = document.createElement("div");
         tHead.style.cssText = "display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:" + C.t3 + ";";
         tHead.innerHTML =
-          '<div style="flex:2;">Client</div>' +
-          '<div style="width:40px;text-align:center;">Month</div>' +
-          '<div style="width:70px;text-align:right;">Old Prem</div>' +
-          '<div style="width:70px;text-align:right;">New Prem</div>' +
-          '<div style="width:50px;text-align:center;">Status</div>';
+          '<div style="flex:2;"></div>' +
+          '<div style="width:50px;text-align:center;">Policies</div>' +
+          '<div style="flex:1;text-align:right;">Premium</div>' +
+          '<div style="flex:1;text-align:right;">Renewed</div>' +
+          '<div style="width:60px;text-align:right;">Rate</div>';
         detailPanel.appendChild(tHead);
 
-        cr.policies.forEach(function(pol) {
-          var pRow = document.createElement("div");
-          pRow.style.cssText = "display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:11px;color:" + C.t2 + ";";
-          var statusColor = pol.paid ? C.green : C.t3;
-          var statusText = pol.paid ? 'PAID' : 'PENDING';
-          pRow.innerHTML =
-            '<div style="flex:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + pol.name + '</div>' +
-            '<div style="width:40px;text-align:center;font-size:10px;">' + pol.month + '</div>' +
-            '<div style="width:70px;text-align:right;">' + fmt(pol.premiumUp) + '</div>' +
-            '<div style="width:70px;text-align:right;">' + (pol.paid ? fmt(pol.premiumNew) : '-') + '</div>' +
-            '<div style="width:50px;text-align:center;font-size:9px;font-weight:600;color:' + statusColor + ';">' + statusText + '</div>';
-          detailPanel.appendChild(pRow);
-        });
+        // Monthly renewal rows
+        if (hasPolicies) {
+          var monthMap = {};
+          cr.policies.forEach(function(pol) {
+            if (!monthMap[pol.month]) {
+              monthMap[pol.month] = { up: 0, renewed: 0, total: 0, paid: 0 };
+            }
+            monthMap[pol.month].up += pol.premiumUp;
+            monthMap[pol.month].renewed += pol.premiumNew;
+            monthMap[pol.month].total++;
+            if (pol.paid) monthMap[pol.month].paid++;
+          });
+
+          var monthOrder = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+          monthOrder.forEach(function(mo) {
+            if (!monthMap[mo]) return;
+            var md = monthMap[mo];
+            var moRet = md.up > 0 ? (md.renewed / md.up * 100) : 0;
+            var moColor = moRet >= 90 ? C.green : moRet >= 80 ? C.amber : C.red;
+            var mRow = document.createElement("div");
+            mRow.style.cssText = "display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:11px;color:" + C.t2 + ";";
+            mRow.innerHTML =
+              '<div style="flex:2;font-weight:600;">' + mo + ' Renewals</div>' +
+              '<div style="width:50px;text-align:center;">' + md.paid + '/' + md.total + '</div>' +
+              '<div style="flex:1;text-align:right;">' + fmt(md.up) + '</div>' +
+              '<div style="flex:1;text-align:right;">' + fmt(md.renewed) + '</div>' +
+              '<div style="width:60px;text-align:right;font-weight:700;color:' + moColor + ';">' + moRet.toFixed(1) + '%</div>';
+            detailPanel.appendChild(mRow);
+          });
+        }
+
+        // Renewal subtotal
+        var renColor = cr.retention >= 90 ? C.green : cr.retention >= 80 ? C.amber : C.red;
+        var subRow = document.createElement("div");
+        subRow.style.cssText = "display:flex;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;font-weight:600;color:" + C.t2 + ";";
+        subRow.innerHTML =
+          '<div style="flex:2;">Renewal Subtotal</div>' +
+          '<div style="width:50px;text-align:center;">' + cr.renewedClients + '/' + cr.clients + '</div>' +
+          '<div style="flex:1;text-align:right;">' + fmt(cr.premiumUp) + '</div>' +
+          '<div style="flex:1;text-align:right;">' + fmt(cr.premiumRenewed) + '</div>' +
+          '<div style="width:60px;text-align:right;font-weight:700;color:' + renColor + ';">' + cr.retention.toFixed(1) + '%</div>';
+        detailPanel.appendChild(subRow);
+
+        // Cancellation losses row
+        if (hasCancLoss) {
+          var cancRow = document.createElement("div");
+          cancRow.style.cssText = "display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:11px;color:" + C.red + ";";
+          cancRow.innerHTML =
+            '<div style="flex:2;font-weight:600;">Cancellation Losses</div>' +
+            '<div style="width:50px;text-align:center;">' + cr.cancLostCount + '</div>' +
+            '<div style="flex:1;text-align:right;">-' + fmt(cr.cancLostPremium) + '</div>' +
+            '<div style="flex:1;text-align:right;"></div>' +
+            '<div style="width:60px;text-align:right;"></div>';
+          detailPanel.appendChild(cancRow);
+        }
+
+        // True retention total
+        var totRow = document.createElement("div");
+        totRow.style.cssText = "display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,0.1);font-size:11px;font-weight:700;color:" + C.t1 + ";background:rgba(255,255,255,0.02);padding-left:4px;padding-right:4px;border-radius:4px;margin-top:2px;";
+        totRow.innerHTML =
+          '<div style="flex:2;">TRUE RETENTION</div>' +
+          '<div style="width:50px;"></div>' +
+          '<div style="flex:1;text-align:right;">' + fmt(cr.totalAtRisk || cr.premiumUp) + '</div>' +
+          '<div style="flex:1;text-align:right;">' + fmt(cr.premiumRenewed) + '</div>' +
+          '<div style="width:60px;text-align:right;color:' + crColor + ';">' + crTrueRet.toFixed(1) + '%</div>';
+        detailPanel.appendChild(totRow);
 
         crWrap.appendChild(detailPanel);
 
