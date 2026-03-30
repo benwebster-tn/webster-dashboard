@@ -1699,7 +1699,7 @@ function renderMainView() {
   grid2x1.style.display = "grid";
   grid2x1.style.gridTemplateColumns = (window.innerWidth < 768) ? "1fr" : "1fr 1fr";
   grid2x1.style.gap = "18px";
-  grid2x1.style.alignItems = "start";
+  grid2x1.style.alignItems = "stretch";
 
   const monthCard = document.createElement("div");
   monthCard.className = "card";
@@ -9919,18 +9919,70 @@ function renderHealthView() {
 
   if (hd.retention.byCarrier && hd.retention.byCarrier.length > 0) {
     hd.retention.byCarrier.forEach(function(cr) {
-      var crRow = document.createElement("div");
-      crRow.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);";
+      var crWrap = document.createElement("div");
       var crColor = cr.retention >= 90 ? C.green : cr.retention >= 80 ? C.amber : C.red;
+      var hasPolicies = cr.policies && cr.policies.length > 0;
+
+      // Summary row (clickable)
+      var crRow = document.createElement("div");
+      crRow.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);" + (hasPolicies ? "cursor:pointer;" : "");
       crRow.innerHTML =
-        '<div style="width:85px;font-size:12px;font-weight:600;color:' + (carrierColors[cr.name] || C.t2) + ';white-space:nowrap;">' + cr.name + '</div>' +
+        '<div style="width:14px;font-size:10px;color:' + C.t3 + ';">' + (hasPolicies ? '\u25B6' : '') + '</div>' +
+        '<div style="width:85px;font-size:12px;font-weight:600;color:' + (carrierColors[cr.name] || C.t2) + ';white-space:nowrap;">' + cr.name + ' <span style="font-size:10px;font-weight:400;color:' + C.t3 + ';">(' + cr.clients + ')</span></div>' +
         '<div style="flex:1;height:5px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;position:relative;">' +
           '<div style="position:absolute;left:' + Math.min(hd.retention.goal, 100) + '%;top:-1px;width:1px;height:7px;background:rgba(255,255,255,0.15);z-index:2;"></div>' +
           '<div style="height:100%;border-radius:3px;width:' + Math.min(cr.retention, 100) + '%;background:' + crColor + ';transition:width 1s ease;"></div>' +
         '</div>' +
         '<div style="width:50px;text-align:right;font-size:12px;font-weight:700;color:' + crColor + ';">' + cr.retention.toFixed(1) + '%</div>' +
         '<div style="width:130px;text-align:right;font-size:10px;color:' + C.t3 + ';white-space:nowrap;">' + fmt(cr.premiumRenewed) + ' / ' + fmt(cr.premiumUp) + '</div>';
-      carrierCard.appendChild(crRow);
+      crWrap.appendChild(crRow);
+
+      // Policy detail panel (hidden by default)
+      if (hasPolicies) {
+        var detailPanel = document.createElement("div");
+        detailPanel.style.cssText = "display:none;padding:4px 0 8px 24px;";
+
+        // Table header
+        var tHead = document.createElement("div");
+        tHead.style.cssText = "display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:" + C.t3 + ";";
+        tHead.innerHTML =
+          '<div style="flex:2;">Client</div>' +
+          '<div style="width:40px;text-align:center;">Month</div>' +
+          '<div style="width:70px;text-align:right;">Old Prem</div>' +
+          '<div style="width:70px;text-align:right;">New Prem</div>' +
+          '<div style="width:50px;text-align:center;">Status</div>';
+        detailPanel.appendChild(tHead);
+
+        cr.policies.forEach(function(pol) {
+          var pRow = document.createElement("div");
+          pRow.style.cssText = "display:flex;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:11px;color:" + C.t2 + ";";
+          var statusColor = pol.paid ? C.green : C.t3;
+          var statusText = pol.paid ? 'PAID' : 'PENDING';
+          pRow.innerHTML =
+            '<div style="flex:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + pol.name + '</div>' +
+            '<div style="width:40px;text-align:center;font-size:10px;">' + pol.month + '</div>' +
+            '<div style="width:70px;text-align:right;">' + fmt(pol.premiumUp) + '</div>' +
+            '<div style="width:70px;text-align:right;">' + (pol.paid ? fmt(pol.premiumNew) : '-') + '</div>' +
+            '<div style="width:50px;text-align:center;font-size:9px;font-weight:600;color:' + statusColor + ';">' + statusText + '</div>';
+          detailPanel.appendChild(pRow);
+        });
+
+        crWrap.appendChild(detailPanel);
+
+        // Toggle expand/collapse
+        crRow.onclick = function() {
+          var arrow = crRow.querySelector('div');
+          if (detailPanel.style.display === 'none') {
+            detailPanel.style.display = 'block';
+            arrow.textContent = '\u25BC';
+          } else {
+            detailPanel.style.display = 'none';
+            arrow.textContent = '\u25B6';
+          }
+        };
+      }
+
+      carrierCard.appendChild(crWrap);
     });
   } else {
     var noData = document.createElement("div");
