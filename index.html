@@ -7514,7 +7514,15 @@ function renderBobContent(container, bob) {
             selectAllRow.appendChild(selectAllCb);
             var selectAllLabel = document.createElement("span");
             selectAllLabel.style.cssText = "font-size:11px;color:" + C.t3 + ";font-weight:600;";
-            selectAllLabel.textContent = "Select All (" + files.length + " files)";
+            var sourceSummary = "";
+            if (r.data.sources) {
+              var parts = [];
+              if (r.data.sources.files > 0) parts.push(r.data.sources.files + " files");
+              if (r.data.sources.acordForms > 0) parts.push(r.data.sources.acordForms + " ACORD");
+              if (r.data.sources.policyAttachments > 0) parts.push(r.data.sources.policyAttachments + " policy");
+              if (parts.length > 0) sourceSummary = " — " + parts.join(", ");
+            }
+            selectAllLabel.textContent = "Select All (" + files.length + " docs" + sourceSummary + ")";
             selectAllRow.appendChild(selectAllLabel);
             fileListDiv.appendChild(selectAllRow);
 
@@ -7542,6 +7550,21 @@ function renderBobContent(container, bob) {
               badge.style.cssText = "font-size:9px;font-weight:700;color:" + badgeColor + ";background:" + badgeColor + "18;padding:2px 6px;border-radius:4px;min-width:30px;text-align:center;flex-shrink:0;";
               badge.textContent = file.fileType;
               fileRow.appendChild(badge);
+
+              // Source badge (shows where the file came from)
+              if (file.source && file.source !== "Files") {
+                var srcBadge = document.createElement("span");
+                var srcColor = file.source === "ACORDForms" ? C.purple :
+                               file.source === "PolicyAttachment" ? C.green :
+                               file.source === "PolicyFiles" ? C.teal : C.t3;
+                var srcLabel = file.source === "ACORDForms" ? "ACORD" :
+                               file.source === "PolicyAttachment" ? "POL ATT" :
+                               file.source === "PolicyFiles" ? "POL FILE" : file.source;
+                srcBadge.style.cssText = "font-size:8px;font-weight:700;color:" + srcColor + ";background:" + srcColor + "18;padding:2px 5px;border-radius:3px;flex-shrink:0;letter-spacing:0.3px;";
+                srcBadge.textContent = srcLabel;
+                if (file.policyNumber) srcBadge.title = "Policy: " + file.policyNumber;
+                fileRow.appendChild(srcBadge);
+              }
 
               var nameSpan = document.createElement("span");
               nameSpan.style.cssText = "font-size:12px;color:" + C.t1 + ";flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
