@@ -9881,7 +9881,7 @@ function renderHealthView() {
   compactMetrics.forEach(function(h) {
     var row = document.createElement("div");
     row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:11px;color:" + C.t2 + ";";
-    row.innerHTML = '<span>' + h.l + '</span><div style="width:55px;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;width:' + Math.min(h.p, 100) + '%;background:' + h.c + ';transition:width 1s ease;"></div></div>';
+    row.innerHTML = '<span>' + h.l + '</span><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;font-weight:600;color:' + h.c + ';min-width:32px;text-align:right;">' + Math.round(h.p) + '%</span><div style="width:55px;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;width:' + Math.min(h.p, 100) + '%;background:' + h.c + ';transition:width 1s ease;"></div></div></div>';
     metricsWrap.appendChild(row);
   });
   scoreInner.appendChild(metricsWrap);
