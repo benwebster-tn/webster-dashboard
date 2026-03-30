@@ -1057,6 +1057,57 @@ function showDocsPreviewModal(opts) {
   document.body.appendChild(overlay);
 }
 
+// ─── DOC PREVIEW INLINE MODAL ────────────────────────
+function showDocPreviewInline(fileName, dataUri, type) {
+  var existing = document.getElementById("doc-preview-overlay");
+  if (existing) existing.remove();
+
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "doc-preview-overlay";
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+  var box = document.createElement("div");
+  box.className = "modal-box";
+  box.style.maxWidth = "720px";
+  box.style.maxHeight = "85vh";
+  box.style.overflow = "auto";
+
+  var title = document.createElement("div");
+  title.className = "modal-title";
+  title.style.color = C.blue;
+  title.innerHTML = '<span style="font-size:18px;">&#128196;</span> ' + fileName;
+  box.appendChild(title);
+
+  if (type === "image") {
+    var img = document.createElement("img");
+    img.src = dataUri;
+    img.style.cssText = "max-width:100%;max-height:65vh;border-radius:8px;border:1px solid #2a2d3a;display:block;margin:0 auto;";
+    box.appendChild(img);
+  }
+
+  var btnRow = document.createElement("div");
+  btnRow.style.cssText = "display:flex;justify-content:flex-end;margin-top:16px;gap:10px;";
+
+  var dlBtn = document.createElement("a");
+  dlBtn.href = dataUri;
+  dlBtn.download = fileName;
+  dlBtn.className = "modal-btn confirm-add";
+  dlBtn.style.cssText += "text-decoration:none;text-align:center;padding:10px 20px;flex:none;";
+  dlBtn.textContent = "Download";
+  btnRow.appendChild(dlBtn);
+
+  var closeBtn = document.createElement("button");
+  closeBtn.className = "modal-btn cancel-modal-btn";
+  closeBtn.textContent = "Close";
+  closeBtn.onclick = function() { overlay.remove(); };
+  btnRow.appendChild(closeBtn);
+
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 // ─── ADD CUSTOMER MODAL ──────────────────────────────
 function closeAddCustomerModal() {
   var el = document.getElementById("add-customer-modal-overlay");
@@ -7515,6 +7566,56 @@ function renderBobContent(container, bob) {
                 dateSpan.textContent = (d.getMonth()+1) + "/" + d.getDate() + "/" + d.getFullYear();
               }
               fileRow.appendChild(dateSpan);
+
+              // Preview button
+              var prevBtn = document.createElement("button");
+              prevBtn.style.cssText = "background:rgba(79,140,255,0.12);color:" + C.blue + ";border:1px solid " + C.blue + "33;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;transition:all 0.2s;flex-shrink:0;";
+              prevBtn.textContent = "Preview";
+              prevBtn.onmouseover = function() { this.style.background = "rgba(79,140,255,0.25)"; };
+              prevBtn.onmouseout = function() { this.style.background = "rgba(79,140,255,0.12)"; };
+              (function(fileId, fileName, fileType, prevBtn) {
+                prevBtn.onclick = function(e) {
+                  e.stopPropagation();
+                  prevBtn.disabled = true;
+                  prevBtn.textContent = "Loading...";
+                  fetchGS("actionPreviewDoc", function(r) {
+                    prevBtn.disabled = false;
+                    prevBtn.textContent = "Preview";
+                    if (!r || !r.ok) {
+                      alert("Preview failed: " + (r ? r.error : "Unknown error"));
+                      return;
+                    }
+                    var dataUri = "data:" + r.data.mimeType + ";base64," + r.data.base64;
+                    var fType = r.data.fileType;
+                    // Images: show in preview area; PDFs: open in new tab; Others: download
+                    if (fType === "PNG" || fType === "JPG" || fType === "JPEG" || fType === "GIF" || fType === "BMP") {
+                      showDocPreviewInline(r.data.fileName, dataUri, "image");
+                    } else if (fType === "PDF") {
+                      // Open PDF in new tab
+                      var byteChars = atob(r.data.base64);
+                      var byteNums = new Array(byteChars.length);
+                      for (var b = 0; b < byteChars.length; b++) byteNums[b] = byteChars.charCodeAt(b);
+                      var byteArr = new Uint8Array(byteNums);
+                      var blob = new Blob([byteArr], { type: "application/pdf" });
+                      var blobUrl = URL.createObjectURL(blob);
+                      window.open(blobUrl, "_blank");
+                    } else {
+                      // Other file types: trigger download
+                      var a = document.createElement("a");
+                      a.href = dataUri;
+                      a.download = r.data.fileName;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }
+                  }, function(err) {
+                    prevBtn.disabled = false;
+                    prevBtn.textContent = "Preview";
+                    alert("Preview error: " + err);
+                  }, { fileId: fileId });
+                };
+              })(file.id, file.fileName, file.fileType, prevBtn);
+              fileRow.appendChild(prevBtn);
 
               fileListDiv.appendChild(fileRow);
             });
