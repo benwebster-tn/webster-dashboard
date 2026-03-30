@@ -9861,7 +9861,12 @@ function renderHealthView() {
   }
 
   var data = appState.data;
-  var healthScore = calculateHealthScore(data, hd);
+  var yp = yearProg();
+  var bobPct = data.bob.target > 0 ? data.bob.current / data.bob.target * 100 : 0;
+  var newPct = data.newBiz.target > 0 ? data.newBiz.ytdPremiums / data.newBiz.target * 100 : 0;
+  var retPct = data.renewals.upForRenewal > 0 ? data.renewals.renewedYtd / data.renewals.upForRenewal * 100 : 0;
+  var newPace = Math.min((newPct / yp) * 100, 100);
+  var healthScore = Math.round(newPace * 0.3 + retPct * 0.35 + bobPct * 0.2 + 75 * 0.15);
 
   // ─── HEALTH RING + MINI BARS ───
   var topSection = document.createElement("div");
@@ -9876,9 +9881,6 @@ function renderHealthView() {
 
   var metricsWrapper = document.createElement("div");
   metricsWrapper.style.flex = "1";
-  var newPace = data.production.newPremium > 0 ? (data.production.newPremium / (250000 / 3)) * 100 : 0;
-  var retPct = data.renewalStats && data.renewalStats.totalRenewed > 0 ? (data.renewalStats.totalRenewed / data.renewalStats.totalDue) * 100 : 0;
-  var bobPct = data.bob && data.bob.growth > 0 ? Math.min((data.bob.growth / 10) * 100, 100) : 0;
 
   var compactMetrics = [
     { l: "New Biz Pace", p: newPace, c: C.blue },
