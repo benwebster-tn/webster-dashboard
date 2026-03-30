@@ -1759,7 +1759,7 @@ function renderMainView() {
   healthCard.appendChild(healthContent);
 
   const healthNote = document.createElement("div");
-  healthNote.style.cssText = "text-align:center;font-size:10px;color:" + C.t3 + ";margin-top:6px;";
+  healthNote.style.cssText = "text-align:center;font-size:10px;color:" + C.t2 + ";margin-top:6px;";
   healthNote.textContent = "30% Pace + 35% True Retention + 20% BOB + 15% Loss Budget";
   healthCard.appendChild(healthNote);
 
@@ -9845,7 +9845,7 @@ function renderHealthView() {
   var hd = appState.healthData;
   if (!hd) {
     var loadingDiv = document.createElement("div");
-    loadingDiv.style.cssText = "text-align:center;padding:40px 20px;font-size:13px;color:" + C.t3 + ";";
+    loadingDiv.style.cssText = "text-align:center;padding:40px 20px;font-size:13px;color:" + C.t2 + ";";
     loadingDiv.textContent = "Loading retention & leakage data...";
     main.appendChild(loadingDiv);
     root.appendChild(main);
@@ -9893,7 +9893,7 @@ function renderHealthView() {
   scoreInner.appendChild(metricsWrap);
   scoreCard.appendChild(scoreInner);
   var scoreNote = document.createElement("div");
-  scoreNote.style.cssText = "text-align:center;font-size:10px;color:" + C.t3 + ";margin-top:6px;";
+  scoreNote.style.cssText = "text-align:center;font-size:10px;color:" + C.t2 + ";margin-top:6px;";
   scoreNote.textContent = "30% Pace + 35% True Retention + 20% BOB + 15% Loss Budget";
   scoreCard.appendChild(scoreNote);
   topGrid.appendChild(scoreCard);
@@ -9908,11 +9908,11 @@ function renderHealthView() {
   retCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,' + retColor + ',' + retColor2 + ');"></div><div class="card-header"><span class="icon">\uD83D\uDD04</span><span>True Retention</span></div>';
   var retRow = document.createElement("div");
   retRow.style.cssText = "display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap;";
-  retRow.innerHTML = '<span style="font-size:28px;font-weight:800;color:' + retColor + ';">' + trueRet.toFixed(1) + '%</span><span style="font-size:12px;color:' + C.t3 + ';">Goal: ' + hd.retention.goal + '% | ' + fmt(hd.retention.premiumRenewed) + ' of ' + fmt(totalAtRisk) + ' at risk</span>';
+  retRow.innerHTML = '<span style="font-size:28px;font-weight:800;color:' + retColor + ';">' + trueRet.toFixed(1) + '%</span><span style="font-size:12px;color:' + C.t2 + ';">Goal: ' + hd.retention.goal + '% | ' + fmt(hd.retention.premiumRenewed) + ' of ' + fmt(totalAtRisk) + ' at risk</span>';
   retCard.appendChild(retRow);
   // Show renewal-only retention as secondary info
   var renewOnlyNote = document.createElement("div");
-  renewOnlyNote.style.cssText = "font-size:10px;color:" + C.t3 + ";margin-bottom:8px;";
+  renewOnlyNote.style.cssText = "font-size:10px;color:" + C.t2 + ";margin-bottom:8px;";
   renewOnlyNote.textContent = "Renewal-only: " + hd.retention.overall.toFixed(1) + "% (" + fmt(hd.retention.premiumRenewed) + " of " + fmt(hd.retention.premiumUp) + " renewed) + " + fmt(hd.leakage.totalLeakage) + " lost to cancellations";
   retCard.appendChild(renewOnlyNote);
   var retBarTrack = document.createElement("div");
@@ -9950,14 +9950,14 @@ function renderHealthView() {
       var crRow = document.createElement("div");
       crRow.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);" + (canExpand ? "cursor:pointer;" : "");
       crRow.innerHTML =
-        '<div style="width:14px;font-size:10px;color:' + C.t3 + ';">' + (canExpand ? '\u25B6' : '') + '</div>' +
-        '<div style="width:85px;font-size:12px;font-weight:600;color:' + (carrierColors[cr.name] || C.t2) + ';white-space:nowrap;">' + cr.name + ' <span style="font-size:10px;font-weight:400;color:' + C.t3 + ';">(' + cr.clients + ')</span></div>' +
+        '<div style="width:14px;font-size:10px;color:' + C.t2 + ';">' + (canExpand ? '\u25B6' : '') + '</div>' +
+        '<div style="width:85px;font-size:12px;font-weight:600;color:' + (carrierColors[cr.name] || C.t2) + ';white-space:nowrap;">' + cr.name + ' <span style="font-size:10px;font-weight:400;color:' + C.t2 + ';">(' + cr.clients + ')</span></div>' +
         '<div style="flex:1;height:5px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;position:relative;">' +
           '<div style="position:absolute;left:' + Math.min(hd.retention.goal, 100) + '%;top:-1px;width:1px;height:7px;background:rgba(255,255,255,0.15);z-index:2;"></div>' +
           '<div style="height:100%;border-radius:3px;width:' + Math.min(crTrueRet, 100) + '%;background:' + crColor + ';transition:width 1s ease;"></div>' +
         '</div>' +
         '<div style="width:50px;text-align:right;font-size:12px;font-weight:700;color:' + crColor + ';">' + crTrueRet.toFixed(1) + '%</div>' +
-        '<div style="width:130px;text-align:right;font-size:10px;color:' + C.t3 + ';white-space:nowrap;">' + fmt(cr.premiumRenewed) + ' / ' + fmt(cr.totalAtRisk || cr.premiumUp) + '</div>';
+        '<div style="width:130px;text-align:right;font-size:10px;color:' + C.t2 + ';white-space:nowrap;">' + fmt(cr.premiumRenewed) + ' / ' + fmt(cr.totalAtRisk || cr.premiumUp) + '</div>';
       crWrap.appendChild(crRow);
 
       // Drill-down panel (hidden by default)
@@ -9967,7 +9967,7 @@ function renderHealthView() {
 
         // Table header
         var tHead = document.createElement("div");
-        tHead.style.cssText = "display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:" + C.t3 + ";";
+        tHead.style.cssText = "display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:" + C.t2 + ";";
         tHead.innerHTML =
           '<div style="flex:2;"></div>' +
           '<div style="width:50px;text-align:center;">Policies</div>' +
@@ -10062,7 +10062,7 @@ function renderHealthView() {
     });
   } else {
     var noData = document.createElement("div");
-    noData.style.cssText = "font-size:11px;color:" + C.t3 + ";padding:8px 0;";
+    noData.style.cssText = "font-size:11px;color:" + C.t2 + ";padding:8px 0;";
     noData.textContent = "Carrier data loading...";
     carrierCard.appendChild(noData);
   }
@@ -10086,9 +10086,9 @@ function renderHealthView() {
     var box = document.createElement("div");
     box.style.cssText = "text-align:center;padding:8px 4px;background:rgba(" + rgb + ",0.06);border:1px solid rgba(" + rgb + ",0.12);border-radius:8px;";
     box.innerHTML =
-      '<div style="font-size:9px;color:' + C.t3 + ';text-transform:uppercase;letter-spacing:0.5px;">' + lb.label + '</div>' +
+      '<div style="font-size:9px;color:' + C.t2 + ';text-transform:uppercase;letter-spacing:0.5px;">' + lb.label + '</div>' +
       '<div style="font-size:16px;font-weight:800;color:' + lb.color + ';margin:2px 0;">' + fmt(lb.value) + '</div>' +
-      '<div style="font-size:10px;color:' + C.t3 + ';">' + lb.count + ' policies</div>';
+      '<div style="font-size:10px;color:' + C.t2 + ';">' + lb.count + ' policies</div>';
     leakGrid.appendChild(box);
   });
   leakCard.appendChild(leakGrid);
