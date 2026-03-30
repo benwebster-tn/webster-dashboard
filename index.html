@@ -1710,8 +1710,9 @@ function renderMainView() {
   grid2x1.appendChild(monthCard);
 
   const healthCard = document.createElement("div");
-  healthCard.className = "card";
-  healthCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,#4f8cff,#34d399);"></div><div class="card-header"><span class="icon">\uD83D\uDCAA</span><span>Agency Health Score</span></div>';
+  healthCard.className = "card clickable";
+  healthCard.onclick = () => navigateTo("health");
+  healthCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,#4f8cff,#34d399);"></div><div class="card-header"><span class="icon">💪</span><span>Agency Health Score</span><span class="expand-hint">CLICK TO EXPAND →</span></div>';
 
   // ── TOP ROW: Health Ring + Mini Bars ──
   const healthContent = document.createElement("div");
@@ -1769,158 +1770,9 @@ function renderMainView() {
   healthNote.textContent = "Composite of pace, retention, growth & pipeline";
   healthCard.appendChild(healthNote);
 
-  // ── EXPANDED SECTION: Retention + Leakage + Carrier Breakdown ──
-  var hd = appState.healthData;
-  if (hd) {
-    // ─── DIVIDER ───
-    var divider1 = document.createElement("div");
-    divider1.style.cssText = "height:1px;background:rgba(255,255,255,0.06);margin:16px 0 14px 0;";
-    healthCard.appendChild(divider1);
-
-    // ─── RETENTION SECTION ───
-    var retHeader = document.createElement("div");
-    retHeader.style.cssText = "font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:" + C.t3 + ";margin-bottom:10px;";
-    retHeader.textContent = "Weighted Retention";
-    healthCard.appendChild(retHeader);
-
-    // Overall retention big number + goal
-    var retRow = document.createElement("div");
-    retRow.style.cssText = "display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap;";
-    var retVal = document.createElement("span");
-    retVal.style.cssText = "font-size:28px;font-weight:800;color:" + (hd.retention.overall >= 90 ? C.green : hd.retention.overall >= 80 ? C.amber : C.red) + ";";
-    retVal.textContent = hd.retention.overall.toFixed(1) + "%";
-    retRow.appendChild(retVal);
-    var retGoal = document.createElement("span");
-    retGoal.style.cssText = "font-size:12px;color:" + C.t3 + ";";
-    retGoal.textContent = "Goal: " + hd.retention.goal + "% | " + fmt(hd.retention.premiumRenewed) + " of " + fmt(hd.retention.premiumUp) + " renewed";
-    retRow.appendChild(retGoal);
-    healthCard.appendChild(retRow);
-
-    // Overall retention progress bar with goal marker
-    var retBarTrack = document.createElement("div");
-    retBarTrack.style.cssText = "width:100%;height:8px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin-bottom:14px;position:relative;";
-    var goalMarker = document.createElement("div");
-    goalMarker.style.cssText = "position:absolute;left:" + Math.min(hd.retention.goal, 100) + "%;top:-2px;width:2px;height:12px;background:" + C.t2 + ";border-radius:1px;z-index:2;";
-    retBarTrack.appendChild(goalMarker);
-    var retBarFill = document.createElement("div");
-    retBarFill.style.cssText = "height:100%;border-radius:6px;transition:width 1s ease;width:" + Math.min(hd.retention.overall, 100) + "%;background:linear-gradient(90deg," + (hd.retention.overall >= 90 ? C.green : hd.retention.overall >= 80 ? C.amber : C.red) + "," + (hd.retention.overall >= 90 ? C.teal : hd.retention.overall >= 80 ? "#f59e0b" : "#ef4444") + ");";
-    retBarTrack.appendChild(retBarFill);
-    healthCard.appendChild(retBarTrack);
-
-    // ─── CARRIER RETENTION BREAKDOWN ───
-    var carrierHeader = document.createElement("div");
-    carrierHeader.style.cssText = "font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:" + C.t3 + ";margin-bottom:8px;";
-    carrierHeader.textContent = "Retention by Carrier";
-    healthCard.appendChild(carrierHeader);
-
-    var carrierColors = { 'Erie': C.blue, 'Travelers': C.purple, 'Progressive': C.teal, 'Broker': C.amber, 'Other': C.t2 };
-
-    if (hd.retention.byCarrier && hd.retention.byCarrier.length > 0) {
-      hd.retention.byCarrier.forEach(function(cr) {
-        var crRow = document.createElement("div");
-        crRow.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);";
-
-        // Carrier name
-        var crName = document.createElement("div");
-        crName.style.cssText = "width:80px;font-size:12px;font-weight:600;color:" + (carrierColors[cr.name] || C.t2) + ";white-space:nowrap;";
-        crName.textContent = cr.name;
-        crRow.appendChild(crName);
-
-        // Mini progress bar
-        var crBarWrap = document.createElement("div");
-        crBarWrap.style.cssText = "flex:1;height:6px;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;position:relative;";
-        var crGoalMark = document.createElement("div");
-        crGoalMark.style.cssText = "position:absolute;left:" + Math.min(hd.retention.goal, 100) + "%;top:-1px;width:1px;height:8px;background:rgba(255,255,255,0.15);z-index:2;";
-        crBarWrap.appendChild(crGoalMark);
-        var crBarFill = document.createElement("div");
-        var crColor = cr.retention >= 90 ? C.green : cr.retention >= 80 ? C.amber : C.red;
-        crBarFill.style.cssText = "height:100%;border-radius:4px;transition:width 1s ease;width:" + Math.min(cr.retention, 100) + "%;background:" + crColor + ";";
-        crBarWrap.appendChild(crBarFill);
-        crRow.appendChild(crBarWrap);
-
-        // Retention %
-        var crPct = document.createElement("div");
-        crPct.style.cssText = "width:48px;text-align:right;font-size:13px;font-weight:700;color:" + crColor + ";";
-        crPct.textContent = cr.retention.toFixed(1) + "%";
-        crRow.appendChild(crPct);
-
-        // Premium detail
-        var crDetail = document.createElement("div");
-        crDetail.style.cssText = "width:120px;text-align:right;font-size:10px;color:" + C.t3 + ";white-space:nowrap;";
-        crDetail.textContent = fmt(cr.premiumRenewed) + " / " + fmt(cr.premiumUp);
-        crRow.appendChild(crDetail);
-
-        healthCard.appendChild(crRow);
-      });
-    } else {
-      var noData = document.createElement("div");
-      noData.style.cssText = "font-size:11px;color:" + C.t3 + ";padding:8px 0;";
-      noData.textContent = "Carrier data loading...";
-      healthCard.appendChild(noData);
-    }
-
-    // ─── DIVIDER ───
-    var divider2 = document.createElement("div");
-    divider2.style.cssText = "height:1px;background:rgba(255,255,255,0.06);margin:14px 0;";
-    healthCard.appendChild(divider2);
-
-    // ─── LEAKAGE SECTION ───
-    var leakHeader = document.createElement("div");
-    leakHeader.style.cssText = "font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:" + C.t3 + ";margin-bottom:10px;";
-    leakHeader.textContent = "Leakage (Visible Losses)";
-    healthCard.appendChild(leakHeader);
-
-    // Leakage stat boxes
-    var leakGrid = document.createElement("div");
-    leakGrid.style.cssText = "display:flex;gap:8px;margin-bottom:10px;";
-
-    var leakBoxes = [
-      { label: "Cancelled", value: hd.leakage.cancellations, count: hd.leakage.cancellationCount, color: C.red },
-      { label: "Non-Renewed", value: hd.leakage.nonRenewals, count: hd.leakage.nonRenewalCount, color: C.amber },
-      { label: "Total Leakage", value: hd.leakage.totalLeakage, count: hd.leakage.totalCount, color: "#ff6b6b" }
-    ];
-
-    leakBoxes.forEach(function(lb) {
-      var box = document.createElement("div");
-      box.style.cssText = "flex:1;text-align:center;padding:8px 6px;background:rgba(" + (lb.color === C.red ? "248,113,113" : lb.color === C.amber ? "251,191,36" : "255,107,107") + ",0.06);border:1px solid rgba(" + (lb.color === C.red ? "248,113,113" : lb.color === C.amber ? "251,191,36" : "255,107,107") + ",0.12);border-radius:10px;";
-      box.innerHTML =
-        '<div style="font-size:9px;color:' + C.t3 + ';text-transform:uppercase;letter-spacing:0.5px;">' + lb.label + '</div>' +
-        '<div style="font-size:15px;font-weight:700;color:' + lb.color + ';margin-top:2px;">' + fmt(lb.value) + '</div>' +
-        '<div style="font-size:10px;color:' + C.t3 + ';">' + lb.count + ' policies</div>';
-      leakGrid.appendChild(box);
-    });
-    healthCard.appendChild(leakGrid);
-
-    // Loss Budget progress bar
-    var lbLabel = document.createElement("div");
-    lbLabel.style.cssText = "display:flex;justify-content:space-between;font-size:11px;color:" + C.t2 + ";margin-bottom:4px;";
-    lbLabel.innerHTML = '<span>Loss Budget: ' + fmt(hd.lossBudget.budget) + '</span><span style="font-weight:600;color:' + (hd.lossBudget.pctUsed <= 25 ? C.green : hd.lossBudget.pctUsed <= 50 ? C.amber : C.red) + ';">' + hd.lossBudget.pctUsed.toFixed(1) + '% used</span>';
-    healthCard.appendChild(lbLabel);
-
-    var lbTrack = document.createElement("div");
-    lbTrack.style.cssText = "width:100%;height:8px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin-bottom:6px;";
-    var lbFill = document.createElement("div");
-    lbFill.style.cssText = "height:100%;border-radius:6px;transition:width 1s ease;width:" + Math.min(hd.lossBudget.pctUsed, 100) + "%;background:linear-gradient(90deg," + (hd.lossBudget.pctUsed <= 25 ? C.green : hd.lossBudget.pctUsed <= 50 ? C.amber : C.red) + "," + (hd.lossBudget.pctUsed <= 25 ? C.teal : hd.lossBudget.pctUsed <= 50 ? "#f59e0b" : "#ef4444") + ");";
-    lbTrack.appendChild(lbFill);
-    healthCard.appendChild(lbTrack);
-
-    // Leakage badge
-    var leakBadge = document.createElement("span");
-    leakBadge.className = "badge " + (hd.leakage.pctOfBob <= 5 ? "ahead" : "behind");
-    leakBadge.textContent = hd.leakage.pctOfBob.toFixed(2) + "% of Live BOB | " + fmt(hd.lossBudget.remaining) + " budget remaining";
-    healthCard.appendChild(leakBadge);
-
-  } else {
-    // Health data not yet loaded
-    var loadingDiv = document.createElement("div");
-    loadingDiv.style.cssText = "text-align:center;padding:16px 0;font-size:11px;color:" + C.t3 + ";";
-    loadingDiv.id = "health-loading-indicator";
-    loadingDiv.textContent = "Loading retention & leakage data...";
-    healthCard.appendChild(loadingDiv);
-  }
-
   grid2x1.appendChild(healthCard);
   main.appendChild(grid2x1);
+
 
   // Quarterly Snapshot
   const grid1x1 = document.createElement("div");
@@ -9961,6 +9813,243 @@ function renderQhPhase3(container) {
   container.appendChild(actionBar);
 }
 
+
+// ─── HEALTH DETAIL VIEW ──────────────────────────────
+function renderHealthView() {
+  var root = document.getElementById("root");
+  root.innerHTML = "";
+
+  var header = document.createElement("div");
+  header.className = "header";
+  var backBtn = document.createElement("button");
+  backBtn.className = "back-btn";
+  backBtn.textContent = "← Back to Command Center";
+  backBtn.onclick = function() { navigateTo("main"); };
+  header.appendChild(backBtn);
+  root.appendChild(header);
+
+  var main = document.createElement("div");
+  main.style.padding = "0 24px 24px 24px";
+
+  var title = document.createElement("div");
+  title.style.cssText = "margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;";
+  var titleLeft = document.createElement("div");
+  var h2 = document.createElement("h2");
+  h2.style.fontSize = "24px";
+  h2.style.fontWeight = "800";
+  h2.style.color = C.green;
+  h2.textContent = "💪 Agency Health Score";
+  var p = document.createElement("p");
+  p.style.color = C.t2;
+  p.style.fontSize = "13px";
+  p.style.marginTop = "4px";
+  p.textContent = "Retention, leakage, and carrier performance";
+  titleLeft.appendChild(h2);
+  titleLeft.appendChild(p);
+  title.appendChild(titleLeft);
+  main.appendChild(title);
+
+  var hd = appState.healthData;
+  if (!hd) {
+    var loadingDiv = document.createElement("div");
+    loadingDiv.style.cssText = "text-align:center;padding:60px 20px;font-size:14px;color:" + C.t3 + ";";
+    loadingDiv.textContent = "Loading retention & leakage data...";
+    main.appendChild(loadingDiv);
+    root.appendChild(main);
+    fetchHealthSnapshot();
+    return;
+  }
+
+  var data = appState.data;
+  var healthScore = calculateHealthScore(data, hd);
+
+  // ─── HEALTH RING + MINI BARS ───
+  var topSection = document.createElement("div");
+  topSection.style.cssText = "display:flex;gap:24px;align-items:center;margin-bottom:24px;";
+
+  var ringWrapper = document.createElement("div");
+  ringWrapper.style.cssText = "flex:0 0 auto;";
+  var ringContainer = document.createElement("div");
+  ringContainer.id = "health-ring-detail-container";
+  ringWrapper.appendChild(ringContainer);
+  topSection.appendChild(ringWrapper);
+
+  var metricsWrapper = document.createElement("div");
+  metricsWrapper.style.flex = "1";
+  var newPace = data.production.newPremium > 0 ? (data.production.newPremium / (250000 / 3)) * 100 : 0;
+  var retPct = data.renewalStats && data.renewalStats.totalRenewed > 0 ? (data.renewalStats.totalRenewed / data.renewalStats.totalDue) * 100 : 0;
+  var bobPct = data.bob && data.bob.growth > 0 ? Math.min((data.bob.growth / 10) * 100, 100) : 0;
+
+  var compactMetrics = [
+    { l: "New Biz Pace", p: newPace, c: C.blue },
+    { l: "Retention", p: retPct, c: C.green },
+    { l: "BOB Growth", p: bobPct, c: C.amber },
+    { l: "Pipeline", p: 75, c: C.purple }
+  ];
+
+  compactMetrics.forEach(function(h) {
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;color:" + C.t2 + ";";
+    var label = document.createElement("span");
+    label.textContent = h.l;
+    var barContainer = document.createElement("div");
+    barContainer.style.cssText = "width:80px;height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;";
+    var bar = document.createElement("div");
+    bar.style.cssText = "height:100%;border-radius:4px;width:" + Math.min(h.p, 100) + "%;background:" + h.c + ";transition:width 1s ease;";
+    barContainer.appendChild(bar);
+    row.appendChild(label);
+    row.appendChild(barContainer);
+    metricsWrapper.appendChild(row);
+  });
+
+  topSection.appendChild(metricsWrapper);
+  main.appendChild(topSection);
+
+  // Animate health ring
+  setTimeout(function() {
+    var ringElem = createHealthRing(healthScore);
+    var container = document.getElementById("health-ring-detail-container");
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(ringElem);
+    }
+  }, 100);
+
+  // ─── WEIGHTED RETENTION SECTION ───
+  var retSection = document.createElement("div");
+  retSection.style.cssText = "margin-bottom:32px;padding:20px;background:rgba(" + (hd.retention.overall >= 90 ? "52,211,153" : hd.retention.overall >= 80 ? "251,191,36" : "248,113,113") + ",0.04);border:1px solid rgba(" + (hd.retention.overall >= 90 ? "52,211,153" : hd.retention.overall >= 80 ? "251,191,36" : "248,113,113") + ",0.12);border-radius:12px;";
+
+  var retHeaderDiv = document.createElement("div");
+  retHeaderDiv.style.cssText = "font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:" + C.t3 + ";margin-bottom:12px;";
+  retHeaderDiv.textContent = "Weighted Retention";
+  retSection.appendChild(retHeaderDiv);
+
+  var retRow = document.createElement("div");
+  retRow.style.cssText = "display:flex;align-items:baseline;gap:16px;margin-bottom:12px;flex-wrap:wrap;";
+  var retVal = document.createElement("span");
+  retVal.style.cssText = "font-size:36px;font-weight:800;color:" + (hd.retention.overall >= 90 ? C.green : hd.retention.overall >= 80 ? C.amber : C.red) + ";";
+  retVal.textContent = hd.retention.overall.toFixed(1) + "%";
+  retRow.appendChild(retVal);
+  var retGoal = document.createElement("span");
+  retGoal.style.cssText = "font-size:13px;color:" + C.t2 + ";";
+  retGoal.textContent = "Goal: " + hd.retention.goal + "% | " + fmt(hd.retention.premiumRenewed) + " of " + fmt(hd.retention.premiumUp) + " renewed";
+  retRow.appendChild(retGoal);
+  retSection.appendChild(retRow);
+
+  var retBarTrack = document.createElement("div");
+  retBarTrack.style.cssText = "width:100%;height:8px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin-bottom:8px;position:relative;";
+  var goalMarker = document.createElement("div");
+  goalMarker.style.cssText = "position:absolute;left:" + Math.min(hd.retention.goal, 100) + "%;top:-2px;width:2px;height:12px;background:" + C.t2 + ";border-radius:1px;z-index:2;";
+  retBarTrack.appendChild(goalMarker);
+  var retBarFill = document.createElement("div");
+  retBarFill.style.cssText = "height:100%;border-radius:6px;transition:width 1s ease;width:" + Math.min(hd.retention.overall, 100) + "%;background:linear-gradient(90deg," + (hd.retention.overall >= 90 ? C.green : hd.retention.overall >= 80 ? C.amber : C.red) + "," + (hd.retention.overall >= 90 ? C.teal : hd.retention.overall >= 80 ? "#f59e0b" : "#ef4444") + ");";
+  retBarTrack.appendChild(retBarFill);
+  retSection.appendChild(retBarTrack);
+  main.appendChild(retSection);
+
+  // ─── RETENTION BY CARRIER ───
+  var carrierSection = document.createElement("div");
+  carrierSection.style.cssText = "margin-bottom:32px;";
+
+  var carrierHeaderDiv = document.createElement("div");
+  carrierHeaderDiv.style.cssText = "font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:" + C.t3 + ";margin-bottom:12px;";
+  carrierHeaderDiv.textContent = "Retention by Carrier";
+  carrierSection.appendChild(carrierHeaderDiv);
+
+  var carrierColors = { 'Erie': C.blue, 'Travelers': C.purple, 'Progressive': C.teal, 'Broker': C.amber, 'Other': C.t2 };
+
+  if (hd.retention.byCarrier && hd.retention.byCarrier.length > 0) {
+    hd.retention.byCarrier.forEach(function(cr) {
+      var crRow = document.createElement("div");
+      crRow.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.03);";
+
+      var crName = document.createElement("div");
+      crName.style.cssText = "width:100px;font-size:13px;font-weight:600;color:" + (carrierColors[cr.name] || C.t2) + ";white-space:nowrap;";
+      crName.textContent = cr.name;
+      crRow.appendChild(crName);
+
+      var crBarWrap = document.createElement("div");
+      crBarWrap.style.cssText = "flex:1;height:6px;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;position:relative;";
+      var crGoalMark = document.createElement("div");
+      crGoalMark.style.cssText = "position:absolute;left:" + Math.min(hd.retention.goal, 100) + "%;top:-1px;width:1px;height:8px;background:rgba(255,255,255,0.15);z-index:2;";
+      crBarWrap.appendChild(crGoalMark);
+      var crBarFill = document.createElement("div");
+      var crColor = cr.retention >= 90 ? C.green : cr.retention >= 80 ? C.amber : C.red;
+      crBarFill.style.cssText = "height:100%;border-radius:4px;transition:width 1s ease;width:" + Math.min(cr.retention, 100) + "%;background:" + crColor + ";";
+      crBarWrap.appendChild(crBarFill);
+      crRow.appendChild(crBarWrap);
+
+      var crPct = document.createElement("div");
+      crPct.style.cssText = "width:60px;text-align:right;font-size:13px;font-weight:700;color:" + crColor + ";";
+      crPct.textContent = cr.retention.toFixed(1) + "%";
+      crRow.appendChild(crPct);
+
+      var crDetail = document.createElement("div");
+      crDetail.style.cssText = "width:140px;text-align:right;font-size:11px;color:" + C.t3 + ";white-space:nowrap;";
+      crDetail.textContent = fmt(cr.premiumRenewed) + " / " + fmt(cr.premiumUp);
+      crRow.appendChild(crDetail);
+
+      carrierSection.appendChild(crRow);
+    });
+  } else {
+    var noCarrierData = document.createElement("div");
+    noCarrierData.style.cssText = "font-size:12px;color:" + C.t3 + ";padding:12px 0;";
+    noCarrierData.textContent = "Carrier data loading...";
+    carrierSection.appendChild(noCarrierData);
+  }
+  main.appendChild(carrierSection);
+
+  // ─── LEAKAGE SECTION ───
+  var leakSection = document.createElement("div");
+  leakSection.style.cssText = "margin-bottom:32px;";
+
+  var leakHeaderDiv = document.createElement("div");
+  leakHeaderDiv.style.cssText = "font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:" + C.t3 + ";margin-bottom:12px;";
+  leakHeaderDiv.textContent = "Leakage (Visible Losses)";
+  leakSection.appendChild(leakHeaderDiv);
+
+  var leakGrid = document.createElement("div");
+  leakGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;";
+
+  var leakBoxes = [
+    { label: "Cancelled", value: hd.leakage.cancellations, count: hd.leakage.cancellationCount, color: C.red },
+    { label: "Non-Renewed", value: hd.leakage.nonRenewals, count: hd.leakage.nonRenewalCount, color: C.amber },
+    { label: "Total Leakage", value: hd.leakage.totalLeakage, count: hd.leakage.totalCount, color: "#ff6b6b" }
+  ];
+
+  leakBoxes.forEach(function(lb) {
+    var box = document.createElement("div");
+    var rgb = lb.color === C.red ? "248,113,113" : lb.color === C.amber ? "251,191,36" : "255,107,107";
+    box.style.cssText = "text-align:center;padding:12px;background:rgba(" + rgb + ",0.06);border:1px solid rgba(" + rgb + ",0.12);border-radius:12px;";
+    box.innerHTML =
+      '<div style="font-size:10px;color:' + C.t3 + ';text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">' + lb.label + '</div>' +
+      '<div style="font-size:20px;font-weight:800;color:' + lb.color + ';margin-bottom:4px;">' + fmt(lb.value) + '</div>' +
+      '<div style="font-size:11px;color:' + C.t3 + ';">' + lb.count + ' policies</div>';
+    leakGrid.appendChild(box);
+  });
+  leakSection.appendChild(leakGrid);
+
+  var lbLabel = document.createElement("div");
+  lbLabel.style.cssText = "display:flex;justify-content:space-between;font-size:12px;color:" + C.t2 + ";margin-bottom:6px;";
+  lbLabel.innerHTML = '<span>Loss Budget: ' + fmt(hd.lossBudget.budget) + '</span><span style="font-weight:600;color:' + (hd.lossBudget.pctUsed <= 25 ? C.green : hd.lossBudget.pctUsed <= 50 ? C.amber : C.red) + ';">' + hd.lossBudget.pctUsed.toFixed(1) + '% used</span>';
+  leakSection.appendChild(lbLabel);
+
+  var lbTrack = document.createElement("div");
+  lbTrack.style.cssText = "width:100%;height:8px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin-bottom:8px;";
+  var lbFill = document.createElement("div");
+  lbFill.style.cssText = "height:100%;border-radius:6px;transition:width 1s ease;width:" + Math.min(hd.lossBudget.pctUsed, 100) + "%;background:linear-gradient(90deg," + (hd.lossBudget.pctUsed <= 25 ? C.green : hd.lossBudget.pctUsed <= 50 ? C.amber : C.red) + "," + (hd.lossBudget.pctUsed <= 25 ? C.teal : hd.lossBudget.pctUsed <= 50 ? "#f59e0b" : "#ef4444") + ");";
+  lbTrack.appendChild(lbFill);
+  leakSection.appendChild(lbTrack);
+
+  var leakBadge = document.createElement("span");
+  leakBadge.className = "badge " + (hd.leakage.pctOfBob <= 5 ? "ahead" : "behind");
+  leakBadge.textContent = hd.leakage.pctOfBob.toFixed(2) + "% of Live BOB | " + fmt(hd.lossBudget.remaining) + " budget remaining";
+  leakSection.appendChild(leakBadge);
+  main.appendChild(leakSection);
+
+  root.appendChild(main);
+}
+
 // ─── NAVIGATE FUNCTION ───────────────────────────────
 function navigateTo(view) {
   appState.view = view;
@@ -9976,6 +10065,8 @@ function navigateTo(view) {
     renderCancellationsView();
   } else if (view === "quotinghub") {
     renderQuotingHubView();
+  } else if (view === "health") {
+    renderHealthView();
   } else {
     renderMainView();
   }
@@ -9990,6 +10081,7 @@ function reRenderCurrentView() {
   else if (appState.view === "boundbiz") { renderBoundBizView(); }
   else if (appState.view === "cancellations") { renderCancellationsView(); }
   else if (appState.view === "quotinghub") { renderQuotingHubView(); }
+  else if (appState.view === "health") { renderHealthView(); }
   else { renderMainView(); }
 }
 
