@@ -10215,9 +10215,11 @@ function fetchHealthSnapshot() {
         appState.healthData = r.data;
         console.log("[HEALTH] Health data loaded. Retention:", r.data.retention.overall + "%, Carriers:", (r.data.retention.byCarrier || []).length);
         if (appState.view === "main") renderMainView();
+        else if (appState.view === "health") renderHealthView();
       } else if (r && r.data) {
         appState.healthData = r.data;
         if (appState.view === "main") renderMainView();
+        else if (appState.view === "health") renderHealthView();
       } else {
         console.warn("[HEALTH] Unexpected format:", r);
       }
