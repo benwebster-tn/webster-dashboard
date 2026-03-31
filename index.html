@@ -5752,6 +5752,20 @@ function renderRenewalView() {
       }
       buildOutreachCard("outreach-45-list", o.data.batches45, "45");
       buildOutreachCard("outreach-30-list", o.data.batches30, "30");
+
+      // Add no-contact clients to Attention Card
+      if (o.data.noContact && o.data.noContact.length > 0) {
+        var attBody = document.querySelector("#attention-card-body");
+        if (attBody) {
+          var noContactList = o.data.noContact.map(function(nc) {
+            var carriers = nc.policies.map(function(p) { return p.carrier; }).join(", ");
+            return { name: nc.name, carrier: carriers, month: nc.policies[0].month, batchType: nc.batchType };
+          });
+          attBody.appendChild(buildAlertRowGlobal("\uD83D\uDCCB", noContactList.length, "missing contact info (check BOB)", "#a78bfa", noContactList, function(cl) {
+            return cl.carrier + " \u00b7 " + cl.batchType + "-day \u00b7 " + cl.month;
+          }));
+        }
+      }
     }, function(err) {
       var el45 = document.getElementById("outreach-45-list");
       var el30 = document.getElementById("outreach-30-list");
@@ -5870,6 +5884,7 @@ function renderRenewalContent(container, renData, retPct) {
     });
 
     var attBody = document.createElement("div");
+    attBody.id = "attention-card-body";
     var totalAlerts = alertClients.escalation5.length + alertClients.unpaid10.length + alertClients.highIncrease.length + alertClients.cancelled.length + alertClients.nonRenewed.length;
     console.log("[ATT-CARD] totalAlerts=" + totalAlerts + " (escalation5=" + alertClients.escalation5.length + ", unpaid10=" + alertClients.unpaid10.length + ", highIncrease=" + alertClients.highIncrease.length + ", cancelled=" + alertClients.cancelled.length + ", nonRenewed=" + alertClients.nonRenewed.length + ")");
 
@@ -6725,6 +6740,47 @@ function renderRenewalContent(container, renData, retPct) {
 }
 
 // ─── BUILD OUTREACH CARD ──────────────────────────────
+// Global alert row builder (used by outreach noContact → Attention Card)
+function buildAlertRowGlobal(icon, count, label, color, clientList, renderFn) {
+  var alertWrap = document.createElement("div");
+  alertWrap.style.cssText = "margin-bottom:4px;border-radius:8px;overflow:hidden;";
+
+  var alertHdr = document.createElement("div");
+  alertHdr.style.cssText = "display:flex;align-items:center;gap:6px;padding:8px 8px;cursor:pointer;transition:background 0.2s;border-radius:8px;";
+  alertHdr.onmouseover = function() { alertHdr.style.background = "rgba(255,255,255,0.04)"; };
+  alertHdr.onmouseout = function() { alertHdr.style.background = ""; };
+  alertHdr.innerHTML = '<span style="font-size:13px;">' + icon + '</span>' +
+    '<span style="font-size:12px;font-weight:700;color:' + color + ';min-width:20px;text-align:center;">' + count + '</span>' +
+    '<span style="font-size:12px;color:' + C.t2 + ';">' + label + '</span>' +
+    '<span style="margin-left:auto;font-size:10px;color:' + C.t3 + ';" class="alert-chev">\u25BC</span>';
+
+  var alertDetail = document.createElement("div");
+  alertDetail.style.cssText = "max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 8px;";
+  for (var c = 0; c < clientList.length; c++) {
+    var ci = clientList[c];
+    var cRow = document.createElement("div");
+    cRow.style.cssText = "display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;";
+    cRow.innerHTML = '<span style="color:#f0f0f5;font-weight:600;">' + ci.name + '</span><span style="color:' + C.t3 + ';">' + renderFn(ci) + '</span>';
+    alertDetail.appendChild(cRow);
+  }
+
+  var chevEl = alertHdr.querySelector(".alert-chev");
+  alertHdr.onclick = function() {
+    var isOpen = alertDetail.style.maxHeight !== "0px" && alertDetail.style.maxHeight !== "0";
+    if (isOpen) {
+      alertDetail.style.maxHeight = "0";
+      if (chevEl) chevEl.textContent = "\u25BC";
+    } else {
+      alertDetail.style.maxHeight = (clientList.length * 32 + 20) + "px";
+      if (chevEl) chevEl.textContent = "\u25B2";
+    }
+  };
+
+  alertWrap.appendChild(alertHdr);
+  alertWrap.appendChild(alertDetail);
+  return alertWrap;
+}
+
 function buildOutreachCard(containerId, clients, batchType) {
   var el = document.getElementById(containerId);
   if (!el) return;
@@ -6742,6 +6798,10 @@ function buildOutreachCard(containerId, clients, batchType) {
     return;
   }
 
+  // Count total policies across all clients
+  var totalPolicies = 0;
+  clients.forEach(function(cl) { totalPolicies += (cl.policies ? cl.policies.length : 1); });
+
   var selectAll = document.createElement("div");
   selectAll.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 0;margin-bottom:6px;border-bottom:1px solid " + C.bdr + ";";
   var selectAllCb = document.createElement("input");
@@ -6754,12 +6814,13 @@ function buildOutreachCard(containerId, clients, batchType) {
   };
   var selectAllLabel = document.createElement("span");
   selectAllLabel.style.cssText = "font-size:12px;font-weight:700;color:" + C.t2 + ";text-transform:uppercase;letter-spacing:0.8px;";
-  selectAllLabel.textContent = "Select All (" + clients.length + " clients)";
+  selectAllLabel.textContent = "Select All (" + clients.length + " clients, " + totalPolicies + " policies)";
   selectAll.appendChild(selectAllCb);
   selectAll.appendChild(selectAllLabel);
   el.appendChild(selectAll);
 
-  clients.forEach(function(cl) {
+  clients.forEach(function(cl, idx) {
+    var policies = cl.policies || [];
     var wrapper = document.createElement("div");
     wrapper.style.cssText = "margin-bottom:4px;border-radius:10px;overflow:hidden;border:1px solid " + accentBg + "0.12);";
 
@@ -6768,31 +6829,48 @@ function buildOutreachCard(containerId, clients, batchType) {
     row.onmouseover = function() { row.style.background = accentBg + "0.08)"; };
     row.onmouseout = function() { row.style.background = accentBg + "0.04)"; };
 
+    // Checkbox — stores the full policies array as JSON for the approval handler
     var cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = true;
     cb.className = "client-cb-" + batchType;
-    cb.dataset.row = cl.row;
-    cb.dataset.month = cl.month;
+    cb.dataset.clientName = cl.name;
+    cb.dataset.policies = JSON.stringify(policies.map(function(p) { return { row: p.row, month: p.month }; }));
     cb.style.cssText = "width:16px;height:16px;accent-color:" + accentColor + ";cursor:pointer;flex-shrink:0;";
     cb.onclick = function(e) { e.stopPropagation(); };
 
+    // Client name + carrier summary
     var info = document.createElement("div");
     info.style.cssText = "flex:1;min-width:0;";
     var nameDiv = document.createElement("div");
     nameDiv.style.cssText = "font-size:14px;font-weight:700;color:#f0f0f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
     nameDiv.textContent = cl.name;
+    var carriers = policies.map(function(p) { return p.carrier; }).filter(Boolean);
+    var uniqueCarriers = carriers.filter(function(v, i, a) { return a.indexOf(v) === i; });
+    var minDays = Math.min.apply(null, policies.map(function(p) { return p.daysUntil || 999; }));
     var metaDiv = document.createElement("div");
     metaDiv.style.cssText = "font-size:11px;color:#8b8fa3;margin-top:1px;";
-    metaDiv.textContent = cl.carrier + " \u00b7 " + cl.daysUntil + " days until renewal";
+    metaDiv.textContent = (policies.length > 1 ? policies.length + " policies" : uniqueCarriers[0] || "1 policy") +
+      " \u00b7 " + minDays + " days until renewal";
     info.appendChild(nameDiv);
     info.appendChild(metaDiv);
 
+    // Premium total on the right
     var rightSide = document.createElement("div");
     rightSide.style.cssText = "display:flex;align-items:center;gap:10px;flex-shrink:0;";
+    var totalPrem = 0;
+    policies.forEach(function(p) {
+      totalPrem += batchType === "45" ? (p.premCurrent || 0) : (p.premRenewal || p.premCurrent || 0);
+    });
     var prem = document.createElement("div");
     prem.style.cssText = "font-size:14px;font-weight:700;color:" + accentColor + ";";
-    prem.textContent = "$" + Math.round(batchType === "45" ? (cl.premCurrent || 0) : (cl.premRenewal || cl.premCurrent || 0)).toLocaleString();
+    prem.textContent = "$" + Math.round(totalPrem).toLocaleString();
+    if (policies.length > 1) {
+      var polCountBadge = document.createElement("span");
+      polCountBadge.style.cssText = "font-size:10px;font-weight:700;background:" + accentBg + "0.2);color:" + accentColor + ";padding:2px 6px;border-radius:8px;";
+      polCountBadge.textContent = policies.length + "x";
+      rightSide.appendChild(polCountBadge);
+    }
     var arrow = document.createElement("span");
     arrow.style.cssText = "font-size:16px;font-weight:700;color:#8b8fa3;";
     arrow.textContent = "\u203A";
@@ -6803,31 +6881,41 @@ function buildOutreachCard(containerId, clients, batchType) {
     row.appendChild(info);
     row.appendChild(rightSide);
 
+    // Expandable detail — one section per policy
     var detail = document.createElement("div");
     detail.style.cssText = "display:none;padding:10px 12px 12px 12px;background:" + accentBg + "0.02);border-top:1px solid " + accentBg + "0.1);";
 
-    var grid = document.createElement("div");
-    grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;";
+    policies.forEach(function(p, pIdx) {
+      if (policies.length > 1) {
+        var polHeader = document.createElement("div");
+        polHeader.style.cssText = "font-size:11px;font-weight:700;color:" + accentColor + ";text-transform:uppercase;letter-spacing:0.6px;margin:" + (pIdx > 0 ? "10px" : "0") + " 0 6px 0;padding-bottom:4px;border-bottom:1px solid " + accentBg + "0.1);";
+        polHeader.textContent = "Policy " + (pIdx + 1) + " — " + (p.carrier || "Unknown");
+        detail.appendChild(polHeader);
+      }
 
-    var fields = [
-      {label: "Carrier", value: cl.carrier || "\u2014", color: "#f0f0f5"},
-      {label: "Eff Date", value: cl.effDate || "\u2014", color: "#c4c7d4"},
-      {label: "Current Premium", value: cl.premCurrent > 0 ? "$" + Math.round(cl.premCurrent).toLocaleString() : "\u2014", color: C.amber},
-      {label: "Renewal Premium", value: cl.premRenewal > 0 ? "$" + Math.round(cl.premRenewal).toLocaleString() : "\u2014", color: C.green},
-      {label: "Days Until Renewal", value: cl.daysUntil ? cl.daysUntil + " days" : "\u2014", color: accentColor},
-      {label: "Pay Type", value: cl.payType || "\u2014", color: "#c4c7d4"}
-    ];
-    if (cl.highIncrease) fields.push({label: "\u26A0\uFE0F Flag", value: ">$500 Increase", color: C.red});
-    if (cl.notes) fields.push({label: "Notes", value: cl.notes, color: "#c4c7d4"});
+      var grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;";
 
-    fields.forEach(function(f) {
-      var fDiv = document.createElement("div");
-      fDiv.style.cssText = "padding:2px 0;";
-      fDiv.innerHTML = '<div style="font-size:10px;color:#8b8fa3;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">' + f.label + '</div><div style="font-size:13px;font-weight:600;color:' + f.color + ';">' + f.value + '</div>';
-      grid.appendChild(fDiv);
+      var fields = [
+        {label: "Carrier", value: p.carrier || "\u2014", color: "#f0f0f5"},
+        {label: "Eff Date", value: p.effDate || "\u2014", color: "#c4c7d4"},
+        {label: "Current Premium", value: p.premCurrent > 0 ? "$" + Math.round(p.premCurrent).toLocaleString() : "\u2014", color: C.amber},
+        {label: "Renewal Premium", value: p.premRenewal > 0 ? "$" + Math.round(p.premRenewal).toLocaleString() : "\u2014", color: C.green},
+        {label: "Days Until Renewal", value: p.daysUntil ? p.daysUntil + " days" : "\u2014", color: accentColor},
+        {label: "Pay Type", value: p.payType || "\u2014", color: "#c4c7d4"}
+      ];
+      if (cl.highIncrease) fields.push({label: "Flag", value: ">$500 Increase", color: C.red});
+      if (p.notes) fields.push({label: "Notes", value: p.notes, color: "#c4c7d4"});
+
+      fields.forEach(function(f) {
+        var fDiv = document.createElement("div");
+        fDiv.style.cssText = "padding:2px 0;";
+        fDiv.innerHTML = '<div style="font-size:10px;color:#8b8fa3;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">' + f.label + '</div><div style="font-size:13px;font-weight:600;color:' + f.color + ';">' + f.value + '</div>';
+        grid.appendChild(fDiv);
+      });
+
+      detail.appendChild(grid);
     });
-
-    detail.appendChild(grid);
 
     var azUrl = buildAZSearchUrl(cl.name);
     if (azUrl) {
@@ -6859,10 +6947,12 @@ function buildOutreachCard(containerId, clients, batchType) {
     if (cbs.length === 0) { alert("No clients selected"); return; }
     var approved = [];
     for (var i = 0; i < cbs.length; i++) {
-      approved.push({ row: parseInt(cbs[i].dataset.row), month: cbs[i].dataset.month });
+      var clientPolicies = [];
+      try { clientPolicies = JSON.parse(cbs[i].dataset.policies); } catch(e) { clientPolicies = []; }
+      approved.push({ name: cbs[i].dataset.clientName, policies: clientPolicies });
     }
     btn.disabled = true;
-    btn.textContent = "\u23F3 Sending " + approved.length + " emails & texts...";
+    btn.textContent = "\u23F3 Sending " + approved.length + " client emails & texts...";
     btn.style.opacity = "0.6";
 
     fetchGS("approveAndSendBatch", function(r) {
@@ -6871,6 +6961,12 @@ function buildOutreachCard(containerId, clients, batchType) {
         btn.style.background = "linear-gradient(135deg,#34d399,#2dd4bf)";
         var allCbs = el.querySelectorAll("input[type=checkbox]");
         for (var j = 0; j < allCbs.length; j++) allCbs[j].disabled = true;
+        if (r.data.errors && r.data.errors.length > 0) {
+          var errDiv = document.createElement("div");
+          errDiv.style.cssText = "margin-top:8px;font-size:11px;color:" + C.red + ";text-align:left;padding:8px;background:rgba(248,113,113,0.08);border-radius:8px;";
+          errDiv.innerHTML = "<strong>Skipped:</strong><br>" + r.data.errors.join("<br>");
+          btnWrap.appendChild(errDiv);
+        }
       } else {
         btn.textContent = "\u274C Error: " + ((r && r.error) || "Unknown");
         btn.style.background = "linear-gradient(135deg,#f87171,#ef4444)";
