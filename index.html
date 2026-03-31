@@ -811,7 +811,7 @@ function showCancelModal(opts) {
 
   var title = document.createElement("div");
   title.className = "modal-title";
-  title.innerHTML = '<span style="font-size:22px;">🚫</span> Cancel Policy';
+  title.innerHTML = '<span style="font-size:22px;"></span> Cancel Policy';
   box.appendChild(title);
 
   // Client info
@@ -1132,7 +1132,7 @@ function showAddCustomerModal(opts) {
   var title = document.createElement("div");
   title.className = "modal-title";
   title.style.color = C.green;
-  title.innerHTML = '<span style="font-size:22px;">➕</span> Add Customer to Book of Business';
+  title.innerHTML = '<span style="font-size:22px;"></span> Add Customer to Book of Business';
   box.appendChild(title);
 
   // Form fields — matches BOB columns A–J
@@ -1653,7 +1653,7 @@ function renderMainView() {
   const healthCard = document.createElement("div");
   healthCard.className = "card clickable";
   healthCard.onclick = () => navigateTo("health");
-  healthCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,#4f8cff,#34d399);"></div><div class="card-header"><span class="icon">💪</span><span>Agency Health Score</span><span class="expand-hint">CLICK TO EXPAND →</span></div>';
+  healthCard.innerHTML = '<div class="card-accent" style="background:linear-gradient(90deg,#4f8cff,#34d399);"></div><div class="card-header"><span class="icon"></span><span>Agency Health Score</span><span class="expand-hint">CLICK TO EXPAND →</span></div>';
 
   // ── Compact: Health Ring + Mini Bars side by side ──
   const healthContent = document.createElement("div");
@@ -1982,7 +1982,7 @@ function renderNewBizView() {
       <div>
         <div class="card" style="padding:16px;">
           <div class="card-header">
-            <span class="icon">📋</span> My Work Queue
+            <span class="icon"></span> My Work Queue
             <span style="margin-left:auto;font-size:11px;color:var(--text-muted);text-transform:none;letter-spacing:0;" id="wq-sort-label">Sorted by urgency</span>
           </div>
 
@@ -2000,7 +2000,7 @@ function renderNewBizView() {
       <div id="detailPanel" class="detail-panel">
         <div id="nb-detail-content">
           <div class="card" style="padding:40px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:12px;opacity:0.3;">📋</div>
+            <div style="font-size:32px;margin-bottom:12px;opacity:0.3;"></div>
             <div style="font-size:14px;color:var(--text-dim);font-weight:600;">Select a lead from the queue</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Click any lead to see full details, contact info, and actions</div>
           </div>
@@ -5097,16 +5097,16 @@ window.compDeleteComparison = compDeleteComparison;
 
     fetchGS('actionEmailComparisonApproval', function(r) {
       if (r && r.ok) {
-        alert('✅ Approval email sent to Christine!\n\n' + r.data.carrierCount + ' carrier' + (r.data.carrierCount > 1 ? 's' : '') + ' compared.\nBest: ' + r.data.bestCarrier + ' at $' + Number(r.data.bestPremium).toLocaleString() + (r.data.savings > 0 ? '\nSavings: $' + Number(r.data.savings).toLocaleString() + '/yr' : '') + '\n\nChristine will review and reply APPROVED to send to ' + email + '.');
+        alert('Approval email sent to Christine!\n\n' + r.data.carrierCount + ' carrier' + (r.data.carrierCount > 1 ? 's' : '') + ' compared.\nBest: ' + r.data.bestCarrier + ' at $' + Number(r.data.bestPremium).toLocaleString() + (r.data.savings > 0 ? '\nSavings: $' + Number(r.data.savings).toLocaleString() + '/yr' : '') + '\n\nChristine will review and reply APPROVED to send to ' + email + '.');
       } else {
-        alert('❌ Failed to send: ' + ((r && r.error) || 'Unknown error'));
+        alert('Failed to send: ' + ((r && r.error) || 'Unknown error'));
       }
       // Re-render to reset buttons
       if (window._wqLeads && window._wqSelectedIdx >= 0) {
         wqShowDetail(window._wqLeads[window._wqSelectedIdx]);
       }
     }, function(err) {
-      alert('❌ Error: ' + (err && err.message || 'Unknown'));
+      alert('Error: ' + (err && err.message || 'Unknown'));
       if (window._wqLeads && window._wqSelectedIdx >= 0) {
         wqShowDetail(window._wqLeads[window._wqSelectedIdx]);
       }
@@ -6902,7 +6902,7 @@ function renderBobView() {
 
   var addCustBtn = document.createElement("button");
   addCustBtn.className = "add-customer-btn";
-  addCustBtn.innerHTML = "➕ Add Customer";
+  addCustBtn.innerHTML = " Add Customer";
   addCustBtn.onclick = function() {
     showAddCustomerModal({
       onSuccess: function() {
@@ -9807,7 +9807,7 @@ function renderHealthView() {
   h2.style.fontSize = "24px";
   h2.style.fontWeight = "800";
   h2.style.color = C.green;
-  h2.textContent = "💪 Agency Health Score";
+  h2.textContent = " Agency Health Score";
   var p = document.createElement("p");
   p.style.color = C.t2;
   p.style.fontSize = "13px";
