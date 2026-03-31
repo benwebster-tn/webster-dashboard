@@ -6865,7 +6865,7 @@ function buildOutreachCard(containerId, clients, batchType) {
     btn.textContent = "\u23F3 Sending " + approved.length + " emails & texts...";
     btn.style.opacity = "0.6";
 
-    fetchGS2("approveAndSendBatch", [batchType, approved], function(r) {
+    fetchGS("approveAndSendBatch", function(r) {
       if (r && r.ok && r.data) {
         btn.textContent = "\u2705 Done! " + r.data.sent + " sent, " + r.data.skipped + " skipped";
         btn.style.background = "linear-gradient(135deg,#34d399,#2dd4bf)";
@@ -6882,7 +6882,7 @@ function buildOutreachCard(containerId, clients, batchType) {
       btn.style.background = "linear-gradient(135deg,#f87171,#ef4444)";
       btn.disabled = false;
       btn.style.opacity = "1";
-    });
+    }, {batchType: batchType, approvedClients: approved});
   };
   btnWrap.appendChild(btn);
   el.appendChild(btnWrap);
